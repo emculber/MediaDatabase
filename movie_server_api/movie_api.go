@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/emculber/database_access/postgresql"
@@ -43,28 +42,7 @@ type new_movie_list struct {
 
 func init() {
 
-	path := os.Getenv("GOPATH")
-	var filePath string = path + "/logs/api_logs/media_database.log"
-
-	log.SetFormatter(&log.TextFormatter{})
-	//log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.InfoLevel)
-
-	log_file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"File Path": filePath,
-			"Error":     err.Error(),
-		}).Error("Error Opening File")
-	}
-
-	log.SetOutput(log_file)
-
-	log.WithFields(log.Fields{
-		"Log Format": "Text Format",
-		"Log level":  "Info",
-		"Log Output": log_file,
-	}).Info("Format, Level, Output set")
+	InitLogger()
 
 	file, err := os.Open("config.json")
 	if err != nil {
@@ -78,7 +56,6 @@ func init() {
 	}
 
 	dbUrl := fmt.Sprintf("postgres://%s:%s@%s/%s", config.Db.Username, config.Db.Password, config.Db.Host, config.Db.Dbname)
-	fmt.Println(dbUrl)
 	log.WithFields(log.Fields{
 		"Postgresql Server": dbUrl,
 	}).Info("Connecting to Postgresql Server")
@@ -90,42 +67,6 @@ func init() {
 		}).Error("ERROR -> Connecting to Postgresql Server")
 		panic(err)
 	}
-}
-
-func validateUserId(key string) (string, error) {
-	var userInfo user
-	err := db.QueryRow("select id, username, key from registered_users where key = $1", key).Scan(&userInfo.id, &userInfo.username, &userInfo.key)
-	switch {
-	case err != nil:
-		log.WithFields(log.Fields{
-			"key":   key,
-			"Error": err,
-		}).Error("ERROR -> Validating User Id")
-		return "", err
-	}
-
-	log.WithFields(log.Fields{
-		"key":      userInfo.key,
-		"username": userInfo.username,
-		"id":       userInfo.id,
-	}).Info("User Accessed")
-
-	return strconv.Itoa(userInfo.id), nil
-}
-
-func validateImdbId(id string) (string, error) {
-	var dbId int
-	err := db.QueryRow("select id from movie_list where imdb_id = $1", id).Scan(&dbId)
-	switch {
-	case err != nil:
-		log.WithFields(log.Fields{
-			"IMDB Id": id,
-			"Error":   err,
-		}).Error("ERROR -> Validating ImdbId Id")
-		return "", err
-	}
-
-	return strconv.Itoa(dbId), nil
 }
 
 func addMovieToList(imdb_id string) {
@@ -140,7 +81,8 @@ func addMovieToList(imdb_id string) {
 	json.NewDecoder(r.Body).Decode(&new_movie)
 	log.WithFields(log.Fields{
 		"json": new_movie,
-	}).Info("Test")
+		"url":  url,
+	}).Info("New IMDB Movie")
 	var id int
 	err = db.QueryRow(`insert into movie_list (imdb_id, movie_title, movie_year) values($1, $2, $3) returning id`, imdb_id, new_movie.Title, new_movie.Year).Scan(&id)
 	if err != nil {
@@ -188,12 +130,11 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 	audio_codac := r.PostFormValue("audio_codac")
 	container := r.PostFormValue("container")
 	frame_rate := r.PostFormValue("frame_rate")
-	pixel_format := r.PostFormValue("pixel_format")
 	aspect_ratio := r.PostFormValue("aspect_ratio")
 
 	if user_key == "" || imdb_id == "" || movie_width == "" ||
 		movie_height == "" || audio_codac == "" || video_codac == "" ||
-		container == "" || frame_rate == "" || pixel_format == "" || aspect_ratio == "" {
+		container == "" || frame_rate == "" || aspect_ratio == "" {
 
 		log.WithFields(log.Fields{
 			"_Method":      r.Method,
@@ -208,7 +149,6 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 			"video_codac":  video_codac,
 			"container":    container,
 			"frame_rate":   frame_rate,
-			"pixel_format": pixel_format,
 			"aspect_ratio": aspect_ratio,
 		}).Error("Empty Content")
 		http.Error(w, "Invalid Request!", http.StatusBadRequest)
@@ -239,7 +179,6 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 			"imdb_id":           imdb_id,
 		}).Info("Adding movie")
 		addMovieToList(imdb_id)
-		return
 	}
 
 	log.WithFields(log.Fields{
@@ -257,26 +196,70 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 		"video_codac":        video_codac,
 		"container":          container,
 		"frame_rate":         frame_rate,
-		"pixel_format":       pixel_format,
 		"aspect_ratio":       aspect_ratio,
 	}).Info("Adding Movie")
 
 	//Check for movie if all ready added
 
-	var id int
-	err = db.QueryRow(`insert into users_movies (movie_list_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, pixel_format, aspect_ratio) values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id`, movie_list_id, user_id, movie_width, movie_height, video_codac, audio_codac, container, frame_rate, pixel_format, aspect_ratio).Scan(&id)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"_Method":         r.Method,
-			"_IP address":     ip[0],
-			"_Port":           ip[1],
-			"_Error":          http.StatusBadRequest,
-			"_Database Error": err,
-		}).Error("Error adding data to database")
-		http.Error(w, "Invalid Request!", http.StatusBadRequest)
-		return
-	}
+	isAdded_statment := fmt.Sprintf("select movie_list_id, user_id from users_movies, movie_list where users_movies.movie_list_id = movie_list.id and users_movies.movie_list_id=%s and users_movies.user_id = %s", movie_list_id, user_id)
 
+	isAdded, count, _ := postgresql_access.QueryDatabase(db, isAdded_statment)
+	if count != 0 {
+		if isAdded[0][0] == movie_list_id && isAdded[0][1] == user_id {
+			log.WithFields(log.Fields{
+				"_Method":            r.Method,
+				"_IP address":        ip[0],
+				"_Port":              ip[1],
+				"_Error":             http.StatusBadRequest,
+				"user_key":           user_key,
+				"user_id":            user_id,
+				"imdb_id":            imdb_id,
+				"imdb_movie_list_id": movie_list_id,
+				"movie_width":        movie_width,
+				"movie_height":       movie_height,
+				"audio_codac":        audio_codac,
+				"video_codac":        video_codac,
+				"container":          container,
+				"frame_rate":         frame_rate,
+				"aspect_ratio":       aspect_ratio,
+			}).Info("Movie Already Added")
+		} else {
+			var id int
+			err = db.QueryRow(`insert into users_movies (movie_list_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, aspect_ratio) values($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`, movie_list_id, user_id, movie_width, movie_height, video_codac, audio_codac, container, frame_rate, aspect_ratio).Scan(&id)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"_Method":         r.Method,
+					"_IP address":     ip[0],
+					"_Port":           ip[1],
+					"_Error":          http.StatusBadRequest,
+					"_Database Error": err,
+				}).Error("Error adding data to database")
+				http.Error(w, "Invalid Request!", http.StatusBadRequest)
+				return
+			}
+			log.WithFields(log.Fields{
+				"id": id,
+			}).Info("Movie Added")
+		}
+	} else {
+
+		var id int
+		err = db.QueryRow(`insert into users_movies (movie_list_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, aspect_ratio) values($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`, movie_list_id, user_id, movie_width, movie_height, video_codac, audio_codac, container, frame_rate, aspect_ratio).Scan(&id)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"_Method":         r.Method,
+				"_IP address":     ip[0],
+				"_Port":           ip[1],
+				"_Error":          http.StatusBadRequest,
+				"_Database Error": err,
+			}).Error("Error adding data to database")
+			http.Error(w, "Invalid Request!", http.StatusBadRequest)
+			return
+		}
+		log.WithFields(log.Fields{
+			"id": id,
+		}).Info("Movie Added")
+	}
 	w.Write([]byte("OK"))
 }
 
@@ -284,16 +267,16 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	ip := strings.Split(r.RemoteAddr, ":")
 	if r.Method != "POST" {
 		log.WithFields(log.Fields{
-			"Method":     r.Method,
-			"IP address": ip[0],
-			"Port":       ip[1],
-			"Error":      http.StatusMethodNotAllowed,
+			"Method (Expected -> POST)": r.Method,
+			"IP address":                ip[0],
+			"Port":                      ip[1],
+			"Error":                     http.StatusMethodNotAllowed,
 		}).Error("Invalid Request!")
 		http.Error(w, "Invalid Request!", http.StatusMethodNotAllowed)
 		return
 	}
 
-	statement := fmt.Sprintf("select id, movie_list_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, pixel_format, aspect_ratio from users_movies")
+	statement := fmt.Sprintf("select id, movie_list_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, aspect_ratio from users_movies")
 
 	movies, _, _ := postgresql_access.QueryDatabase(db, statement)
 

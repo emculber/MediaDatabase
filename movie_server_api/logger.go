@@ -6,6 +6,11 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+type ApiLoggerFields struct {
+	ip_address  string
+	method_type string
+}
+
 func InitLogger() {
 	path := os.Getenv("GOPATH")
 	var filePath string = path + "/logs/api_logs/media_database.log"

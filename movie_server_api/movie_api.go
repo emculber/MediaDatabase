@@ -1,11 +1,9 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/emculber/database_access/postgresql"
@@ -14,107 +12,51 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var config Configuration
-var db *sql.DB
-
-type databaseInfo struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-	Dbname   string
-}
-
-type Configuration struct {
-	Db databaseInfo
-}
-
 type user struct {
 	id       int
 	username string
 	key      string
 }
 
-type new_movie_list struct {
-	Title string
-	Year  string
-}
-
 func init() {
 
 	InitLogger()
+	InitDatabase()
+	InitExternalSources()
 
-	file, err := os.Open("config.json")
-	if err != nil {
-		panic(err)
-	}
-
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&config)
-	if err != nil {
-		panic(err)
-	}
-
-	dbUrl := fmt.Sprintf("postgres://%s:%s@%s/%s", config.Db.Username, config.Db.Password, config.Db.Host, config.Db.Dbname)
-	log.WithFields(log.Fields{
-		"Postgresql Server": dbUrl,
-	}).Info("Connecting to Postgresql Server")
-	db, err = sql.Open("postgres", dbUrl)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"Postgresql Server": dbUrl,
-			"Error":             err,
-		}).Error("ERROR -> Connecting to Postgresql Server")
-		panic(err)
-	}
 }
 
 func addMovieToList(imdb_id string) {
-	url := "http://www.omdbapi.com/?i=" + imdb_id
-	new_movie := new_movie_list{}
-	r, err := http.Get(url)
-	if err != nil {
-		return
-	}
-	defer r.Body.Close()
-
-	json.NewDecoder(r.Body).Decode(&new_movie)
-	log.WithFields(log.Fields{
-		"json": new_movie,
-		"url":  url,
-	}).Info("New IMDB Movie")
-	var id int
-	err = db.QueryRow(`insert into movie_list (imdb_id, movie_title, movie_year) values($1, $2, $3) returning id`, imdb_id, new_movie.Title, new_movie.Year).Scan(&id)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"json":    new_movie,
-			"imdb id": id,
-		}).Error("Error adding data to database")
-		return
-	}
+	omdbapiData, err := Omdbapi(imdb_id)
+	id, err := InsertNewMovie(omdbapiData)
+	fmt.Println(id, err)
 }
 
 func test(w http.ResponseWriter, r *http.Request) {
-	ip := strings.Split(r.RemoteAddr, ":")
+
+	api_logger_fields := ApiLoggerFields{}
+	api_logger_fields.ip_address = r.RemoteAddr
+	api_logger_fields.method_type = r.Method
+
 	log.WithFields(log.Fields{
-		"_Method":     r.Method,
-		"_IP address": ip[0],
-		"_Port":       ip[1],
-		"IP:Port":     r.RemoteAddr,
+		"Logger Fields": loggerFields,
 	}).Info("Test was hit")
+
 	w.Write([]byte("OK"))
 }
 
 func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
-	ip := strings.Split(r.RemoteAddr, ":")
+
+	api_logger_fields := ApiLoggerFields{}
+	api_logger_fields.ip_address = r.RemoteAddr
+	api_logger_fields.method_type = r.Method
+
 	if r.Method != "POST" {
 		log.WithFields(log.Fields{
-			"Method":     r.Method,
-			"IP address": ip[0],
-			"Port":       ip[1],
-			"Error":      http.StatusMethodNotAllowed,
+			"Logger Fields": loggerFields,
+			"Error":         http.StatusMethodNotAllowed,
 		}).Error("Invalid Request!")
-		http.Error(w, "Invalid Request!", http.StatusMethodNotAllowed)
+		http.Error(w, "Invalid Request -> Incorrect Method Call", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -137,46 +79,42 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 		container == "" || frame_rate == "" || aspect_ratio == "" {
 
 		log.WithFields(log.Fields{
-			"_Method":      r.Method,
-			"_IP address":  ip[0],
-			"_Port":        ip[1],
-			"_Error":       http.StatusBadRequest,
-			"user_key":     user_key,
-			"imdb_id":      imdb_id,
-			"movie_width":  movie_width,
-			"movie_height": movie_height,
-			"audio_codac":  audio_codac,
-			"video_codac":  video_codac,
-			"container":    container,
-			"frame_rate":   frame_rate,
-			"aspect_ratio": aspect_ratio,
+			"Logger Fields": loggerFields,
+			"Error":         "addMovieToUserList -> Empty Value Detected",
+			"user_key":      user_key,
+			"imdb_id":       imdb_id,
+			"movie_width":   movie_width,
+			"movie_height":  movie_height,
+			"audio_codac":   audio_codac,
+			"video_codac":   video_codac,
+			"container":     container,
+			"frame_rate":    frame_rate,
+			"aspect_ratio":  aspect_ratio,
 		}).Error("Empty Content")
-		http.Error(w, "Invalid Request!", http.StatusBadRequest)
+		http.Error(w, "Invalid Request -> Empty Content Was Detected", http.StatusBadRequest)
 		return
 	}
 
 	user_id, err := validateUserId(user_key)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"_Method":           r.Method,
-			"_IP address":       ip[0],
-			"_Port":             ip[1],
-			"_Error":            http.StatusBadRequest,
-			"_Validation Error": err,
-			"user_key":          user_key,
+			"Logger Fields":    loggerFields,
+			"Error":            http.StatusBadRequest,
+			"Validation Error": err,
+			"user_key":         user_key,
 		}).Error("Invalid User")
-		http.Error(w, "Invalid Request! Invalid User!", http.StatusBadRequest)
+		http.Error(w, "Invalid Request -> Invalid User", http.StatusBadRequest)
 		return
 	}
 
 	movie_list_id, err := validateImdbId(imdb_id)
 	if err != nil {
+		omdbapiData, err := Omdbapi(imdb_id)
+		id, err := InsertNewMovie(omdbapiData)
 		log.WithFields(log.Fields{
-			"_Method":           r.Method,
-			"_IP address":       ip[0],
-			"_Port":             ip[1],
-			"_Validation Error": err,
-			"imdb_id":           imdb_id,
+			"Logger Fields":    loggerFields,
+			"Validation Error": err,
+			"imdb_id":          imdb_id,
 		}).Info("Adding movie")
 		addMovieToList(imdb_id)
 	}
@@ -292,7 +230,6 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fmt.Println(config)
 	http.HandleFunc("/api/getallmovies", getAllMovies)
 	http.HandleFunc("/api/addmovie", addMovieToUserMovies)
 	http.HandleFunc("/api/test", test)

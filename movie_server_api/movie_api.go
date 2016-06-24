@@ -2,21 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/emculber/database_access/postgresql"
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 )
-
-type user struct {
-	id       int
-	username string
-	key      string
-}
 
 func init() {
 
@@ -26,12 +17,6 @@ func init() {
 
 }
 
-func addMovieToList(imdb_id string) {
-	omdbapiData, err := Omdbapi(imdb_id)
-	id, err := InsertNewMovie(omdbapiData)
-	fmt.Println(id, err)
-}
-
 func test(w http.ResponseWriter, r *http.Request) {
 
 	api_logger_fields := ApiLoggerFields{}
@@ -39,21 +24,20 @@ func test(w http.ResponseWriter, r *http.Request) {
 	api_logger_fields.method_type = r.Method
 
 	log.WithFields(log.Fields{
-		"Logger Fields": loggerFields,
+		"Logger Fields": api_logger_fields,
 	}).Info("Test was hit")
 
 	w.Write([]byte("OK"))
 }
 
 func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
-
 	api_logger_fields := ApiLoggerFields{}
 	api_logger_fields.ip_address = r.RemoteAddr
 	api_logger_fields.method_type = r.Method
 
 	if r.Method != "POST" {
 		log.WithFields(log.Fields{
-			"Logger Fields": loggerFields,
+			"Logger Fields": api_logger_fields,
 			"Error":         http.StatusMethodNotAllowed,
 		}).Error("Invalid Request!")
 		http.Error(w, "Invalid Request -> Incorrect Method Call", http.StatusMethodNotAllowed)
@@ -64,166 +48,148 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	user_key := r.PostFormValue("user_key")
-	imdb_id := strings.ToLower(r.PostFormValue("imdb_id"))
-	movie_width := r.PostFormValue("movie_width")
-	movie_height := r.PostFormValue("movie_height")
-	video_codac := r.PostFormValue("video_codac")
-	audio_codac := r.PostFormValue("audio_codac")
-	container := r.PostFormValue("container")
-	frame_rate := r.PostFormValue("frame_rate")
-	aspect_ratio := r.PostFormValue("aspect_ratio")
+	user := User{}
+	user.User_key = r.PostFormValue("user_key")
 
-	if user_key == "" || imdb_id == "" || movie_width == "" ||
-		movie_height == "" || audio_codac == "" || video_codac == "" ||
-		container == "" || frame_rate == "" || aspect_ratio == "" {
+	omdbapi := OmdbapiData{}
+	omdbapi.Imdb_id = strings.ToLower(r.PostFormValue("imdb_id"))
+
+	users_movie := UsersMovie{}
+	users_movie.User = user
+	users_movie.Omdbapi = omdbapi
+	users_movie.Movie_width = r.PostFormValue("movie_width")
+	users_movie.Movie_height = r.PostFormValue("movie_height")
+	users_movie.Video_codac = r.PostFormValue("video_codac")
+	users_movie.Audio_codac = r.PostFormValue("audio_codac")
+	users_movie.Container = r.PostFormValue("container")
+	users_movie.Frame_rate = r.PostFormValue("frame_rate")
+	users_movie.Aspect_ratio = r.PostFormValue("aspect_ratio")
+
+	if users_movie.User.User_key == "" || users_movie.Omdbapi.Imdb_id == "" || users_movie.Movie_width == "" ||
+		users_movie.Movie_height == "" || users_movie.Audio_codac == "" || users_movie.Video_codac == "" ||
+		users_movie.Container == "" || users_movie.Frame_rate == "" || users_movie.Aspect_ratio == "" {
 
 		log.WithFields(log.Fields{
-			"Logger Fields": loggerFields,
+			"Logger Fields": api_logger_fields,
 			"Error":         "addMovieToUserList -> Empty Value Detected",
-			"user_key":      user_key,
-			"imdb_id":       imdb_id,
-			"movie_width":   movie_width,
-			"movie_height":  movie_height,
-			"audio_codac":   audio_codac,
-			"video_codac":   video_codac,
-			"container":     container,
-			"frame_rate":    frame_rate,
-			"aspect_ratio":  aspect_ratio,
+			"User Movie":    users_movie,
 		}).Error("Empty Content")
 		http.Error(w, "Invalid Request -> Empty Content Was Detected", http.StatusBadRequest)
 		return
 	}
 
-	user_id, err := validateUserId(user_key)
-	if err != nil {
+	var isValidated bool
+	var err error
+	isValidated, users_movie.User, err = validateUserId(users_movie.User)
+	if err != nil || !isValidated {
 		log.WithFields(log.Fields{
-			"Logger Fields":    loggerFields,
+			"Logger Fields":    api_logger_fields,
 			"Error":            http.StatusBadRequest,
 			"Validation Error": err,
-			"user_key":         user_key,
+			"User":             users_movie.User,
+			"Data":             users_movie,
+			"Registered User":  isValidated,
 		}).Error("Invalid User")
 		http.Error(w, "Invalid Request -> Invalid User", http.StatusBadRequest)
 		return
 	}
 
-	movie_list_id, err := validateImdbId(imdb_id)
-	if err != nil {
-		omdbapiData, err := Omdbapi(imdb_id)
-		id, err := InsertNewMovie(omdbapiData)
+	isValidated, users_movie.Omdbapi, err = validateImdbId(users_movie.Omdbapi)
+	if err != nil || !isValidated {
+		users_movie.Omdbapi, err = Omdbapi(users_movie.Omdbapi.Imdb_id)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"Logger Fields": api_logger_fields,
+				"Error":         err,
+				"Movie":         users_movie.Omdbapi,
+				"Data":          users_movie,
+			}).Error("Error Finding Movie")
+		}
+		users_movie.Omdbapi, err = InsertNewMovie(users_movie.Omdbapi)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"Logger Fields": api_logger_fields,
+				"Error":         err,
+				"Movie":         users_movie.Omdbapi,
+				"Data":          users_movie,
+			}).Error("Error Inserting Movie")
+		}
 		log.WithFields(log.Fields{
-			"Logger Fields":    loggerFields,
 			"Validation Error": err,
-			"imdb_id":          imdb_id,
-		}).Info("Adding movie")
-		addMovieToList(imdb_id)
+			"Movie":            users_movie.Omdbapi,
+			"Data":             users_movie,
+			"Registered Movie": isValidated,
+		}).Info("Added movie")
 	}
 
 	log.WithFields(log.Fields{
-		"_Method":            r.Method,
-		"_IP address":        ip[0],
-		"_Port":              ip[1],
-		"_Error":             http.StatusBadRequest,
-		"user_key":           user_key,
-		"user_id":            user_id,
-		"imdb_id":            imdb_id,
-		"imdb_movie_list_id": movie_list_id,
-		"movie_width":        movie_width,
-		"movie_height":       movie_height,
-		"audio_codac":        audio_codac,
-		"video_codac":        video_codac,
-		"container":          container,
-		"frame_rate":         frame_rate,
-		"aspect_ratio":       aspect_ratio,
-	}).Info("Adding Movie")
+		"Data": users_movie,
+	}).Info("Adding Users Movie")
 
-	//Check for movie if all ready added
-
-	isAdded_statment := fmt.Sprintf("select movie_list_id, user_id from users_movies, movie_list where users_movies.movie_list_id = movie_list.id and users_movies.movie_list_id=%s and users_movies.user_id = %s", movie_list_id, user_id)
-
-	isAdded, count, _ := postgresql_access.QueryDatabase(db, isAdded_statment)
-	if count != 0 {
-		if isAdded[0][0] == movie_list_id && isAdded[0][1] == user_id {
-			log.WithFields(log.Fields{
-				"_Method":            r.Method,
-				"_IP address":        ip[0],
-				"_Port":              ip[1],
-				"_Error":             http.StatusBadRequest,
-				"user_key":           user_key,
-				"user_id":            user_id,
-				"imdb_id":            imdb_id,
-				"imdb_movie_list_id": movie_list_id,
-				"movie_width":        movie_width,
-				"movie_height":       movie_height,
-				"audio_codac":        audio_codac,
-				"video_codac":        video_codac,
-				"container":          container,
-				"frame_rate":         frame_rate,
-				"aspect_ratio":       aspect_ratio,
-			}).Info("Movie Already Added")
-		} else {
-			var id int
-			err = db.QueryRow(`insert into users_movies (movie_list_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, aspect_ratio) values($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`, movie_list_id, user_id, movie_width, movie_height, video_codac, audio_codac, container, frame_rate, aspect_ratio).Scan(&id)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"_Method":         r.Method,
-					"_IP address":     ip[0],
-					"_Port":           ip[1],
-					"_Error":          http.StatusBadRequest,
-					"_Database Error": err,
-				}).Error("Error adding data to database")
-				http.Error(w, "Invalid Request!", http.StatusBadRequest)
-				return
-			}
-			log.WithFields(log.Fields{
-				"id": id,
-			}).Info("Movie Added")
-		}
+	isValidated, err = validateUsersMovie(users_movie)
+	if isValidated {
+		log.WithFields(log.Fields{
+			"Logger Fields": api_logger_fields,
+			"Data":          users_movie,
+		}).Info("Movie Already Added")
 	} else {
-
-		var id int
-		err = db.QueryRow(`insert into users_movies (movie_list_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, aspect_ratio) values($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`, movie_list_id, user_id, movie_width, movie_height, video_codac, audio_codac, container, frame_rate, aspect_ratio).Scan(&id)
+		users_movie, err = InsertNewUsersMovie(users_movie)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"_Method":         r.Method,
-				"_IP address":     ip[0],
-				"_Port":           ip[1],
-				"_Error":          http.StatusBadRequest,
-				"_Database Error": err,
+				"Logger Fields":  api_logger_fields,
+				"Error":          http.StatusBadRequest,
+				"Database Error": err,
+				"Data":           users_movie,
 			}).Error("Error adding data to database")
-			http.Error(w, "Invalid Request!", http.StatusBadRequest)
+			http.Error(w, "Invalid Request -> Error Adding Movie", http.StatusBadRequest)
 			return
 		}
 		log.WithFields(log.Fields{
-			"id": id,
+			"Data": users_movie,
 		}).Info("Movie Added")
 	}
 	w.Write([]byte("OK"))
 }
 
 func getAllMovies(w http.ResponseWriter, r *http.Request) {
-	ip := strings.Split(r.RemoteAddr, ":")
+	api_logger_fields := ApiLoggerFields{}
+	api_logger_fields.ip_address = r.RemoteAddr
+	api_logger_fields.method_type = r.Method
+
 	if r.Method != "POST" {
 		log.WithFields(log.Fields{
-			"Method (Expected -> POST)": r.Method,
-			"IP address":                ip[0],
-			"Port":                      ip[1],
-			"Error":                     http.StatusMethodNotAllowed,
+			"Logger Fields": api_logger_fields,
+			"Error":         http.StatusMethodNotAllowed,
 		}).Error("Invalid Request!")
 		http.Error(w, "Invalid Request!", http.StatusMethodNotAllowed)
 		return
 	}
+	r.ParseForm()
 
-	statement := fmt.Sprintf("select id, movie_list_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, aspect_ratio from users_movies")
+	user := User{}
+	user.User_key = r.PostFormValue("user_key")
 
-	movies, _, _ := postgresql_access.QueryDatabase(db, statement)
-
-	if err := json.NewEncoder(w).Encode(movies); err != nil {
+	var isValidated bool
+	var err error
+	isValidated, user, err = validateUserId(user)
+	if err != nil || !isValidated {
 		log.WithFields(log.Fields{
-			"Method":     r.Method,
-			"IP address": ip[0],
-			"Port":       ip[1],
-			"Error":      err,
+			"Logger Fields":    api_logger_fields,
+			"Error":            http.StatusBadRequest,
+			"Validation Error": err,
+			"User":             user,
+			"Registered User":  isValidated,
+		}).Error("Invalid User")
+		http.Error(w, "Invalid Request -> Invalid User", http.StatusBadRequest)
+		return
+	}
+
+	movies := ReadUserMovies(user)
+
+	if err = json.NewEncoder(w).Encode(movies); err != nil {
+		log.WithFields(log.Fields{
+			"Logger Fields": api_logger_fields,
+			"Error":         err,
 		}).Error("Invalid Request!")
 		panic(err)
 	}

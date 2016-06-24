@@ -5,12 +5,6 @@ import (
 	"net/http"
 )
 
-type OmdbapiData struct {
-	Imdb_id string
-	Title   string
-	Year    string
-}
-
 func InitExternalSources() {
 }
 

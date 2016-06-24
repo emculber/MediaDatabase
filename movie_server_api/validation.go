@@ -1,43 +1,53 @@
 package main
 
 import (
-	"strconv"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/emculber/database_access/postgresql"
 )
 
-func validateUserId(key string) (string, error) {
-	var userInfo user
-	err := db.QueryRow("select id, username, key from registered_users where key = $1", key).Scan(&userInfo.id, &userInfo.username, &userInfo.key)
-	switch {
-	case err != nil:
+func validateUserId(user User) (bool, User, error) {
+	err := db.QueryRow("select id, username, key from registered_users where key = $1", user.User_key).Scan(&user.Id, &user.Username, &user.User_key)
+	if err != nil {
 		log.WithFields(log.Fields{
-			"key":   key,
+			"User":  user,
 			"Error": err,
 		}).Error("ERROR -> Validating User Id")
-		return "", err
+		return false, user, err
 	}
 
 	log.WithFields(log.Fields{
-		"key":      userInfo.key,
-		"username": userInfo.username,
-		"id":       userInfo.id,
+		"User": user,
 	}).Info("User Accessed")
 
-	return strconv.Itoa(userInfo.id), nil
+	return true, user, nil
 }
 
-func validateImdbId(id string) (string, error) {
-	var dbId int
-	err := db.QueryRow("select id from movie_list where imdb_id = $1", id).Scan(&dbId)
-	switch {
-	case err != nil:
+func validateImdbId(omdbapi OmdbapiData) (bool, OmdbapiData, error) {
+	err := db.QueryRow("select id, imdb_id, movie_title, movie_year from movie_list where imdb_id = $1", omdbapi.Imdb_id).Scan(&omdbapi.Id, omdbapi.Imdb_id, omdbapi.Title, omdbapi.Year)
+	if err != nil {
 		log.WithFields(log.Fields{
-			"IMDB Id": id,
-			"Error":   err,
+			"Movie": omdbapi,
+			"Error": err,
 		}).Error("ERROR -> Validating ImdbId Id")
-		return "", err
+		return false, omdbapi, err
 	}
 
-	return strconv.Itoa(dbId), nil
+	return true, omdbapi, nil
+}
+
+func validateUsersMovie(users_movie UsersMovie) (bool, error) {
+	validate_users_movie_statment := fmt.Sprintf("select movie_list_id, user_id from users_movies, movie_list where users_movies.movie_list_id = movie_list.id and users_movies.movie_list_id=%s and users_movies.user_id = %s", users_movie.Omdbapi.Id, users_movie.User.Id)
+	isAdded, count, err := postgresql_access.QueryDatabase(db, validate_users_movie_statment)
+	if count != 0 || err != nil {
+		if isAdded[0][0] == users_movie.Omdbapi.Id && isAdded[0][1] == users_movie.User.Id {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	} else {
+		return false, err
+	}
+	return false, err
 }

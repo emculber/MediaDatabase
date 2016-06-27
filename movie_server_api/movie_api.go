@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 
@@ -200,4 +202,18 @@ func main() {
 	http.HandleFunc("/api/addmovie", addMovieToUserMovies)
 	http.HandleFunc("/api/test", test)
 	http.ListenAndServe(":8080", nil)
+}
+
+func respond(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
+	var buffer bytes.Buffer
+	if err = json.NewEncoder(&buffer).Encode(data); err != nil {
+		http.Error(w, err.Error(), http.StatueInternalServerError)
+		return
+	}
+	w.WriteHeader(status)
+	if _, err := io.Copy(w, &buffer); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Respond Error ->")
+	}
 }

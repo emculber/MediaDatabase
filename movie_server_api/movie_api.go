@@ -18,39 +18,25 @@ func init() {
 
 }
 
-type Adapter func(http.Handler) http.Handler
-
-func ApiCallLog() Adapter {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			//api_logger_fields := ApiLoggerFields{}
-			//api_logger_fields.ip_address = r.RemoteAddr
-			//api_logger_fields.method_type = r.Method
-			log.WithFields(log.Fields{
-				"Logger Fields": r.RemoteAddr,
-			}).Info("API Call")
-			h.ServeHTTP(w, r)
-		})
+func ApiCallLog(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//api_logger_fields := ApiLoggerFields{}
+		//api_logger_fields.ip_address = r.RemoteAddr
+		//api_logger_fields.method_type = r.Method
+		log.WithFields(log.Fields{
+			"Logger Fields": r.RemoteAddr,
+		}).Info("API Call")
+		next(w, r)
 	}
 }
 
-//func ValidateUserKey(user User) Adapter {
-func ValidateUserKey() Adapter {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.WithFields(log.Fields{
-				"User": "test",
-			}).Info("Validating User")
-			h.ServeHTTP(w, r)
-		})
+func ValidateUserKey(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.WithFields(log.Fields{
+			"User": "test",
+		}).Info("Validating User")
+		next(w, r)
 	}
-}
-
-func Adapt(h http.Handler, adapters ...Adapter) http.Handler {
-	for _, adapter := range adapters {
-		h = adapter(h)
-	}
-	return h
 }
 
 func test(w http.ResponseWriter, r *http.Request) {
@@ -227,13 +213,12 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 func main() {
 	//http.HandleFunc("/api/getallmovies", getAllMovies)
 	//http.HandleFunc("/api/addmovie", addMovieToUserMovies)
-	http.Handle("/api/test", Adapt(test(), ValidateUserKey(), ApiCallLog()))
+	http.HandleFunc("/api/test", ApiCallLog(ValidateUserKey(test)))
 	http.ListenAndServe(":8080", nil)
 }
 
 func respond(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
 	var buffer bytes.Buffer
-	var err error
 	if err := json.NewEncoder(&buffer).Encode(data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -247,7 +232,6 @@ func respond(w http.ResponseWriter, r *http.Request, status int, data interface{
 }
 
 func decode(r *http.Request, data interface{}) error {
-	var err error
 	if err := json.NewDecoder(r.Body).Decode(data); err != nil {
 		return err
 	}

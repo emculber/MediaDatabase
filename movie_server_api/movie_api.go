@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
@@ -13,25 +12,52 @@ import (
 
 func init() {
 
-	InitLogger()
-	InitDatabase()
-	InitExternalSources()
+	//InitLogger()
+	//InitDatabase()
+	//InitExternalSources()
 
+}
+
+type Adapter func(http.Handler) http.Handler
+
+func ApiCallLog() Adapter {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			//api_logger_fields := ApiLoggerFields{}
+			//api_logger_fields.ip_address = r.RemoteAddr
+			//api_logger_fields.method_type = r.Method
+			log.WithFields(log.Fields{
+				"Logger Fields": r.RemoteAddr,
+			}).Info("API Call")
+			h.ServeHTTP(w, r)
+		})
+	}
+}
+
+//func ValidateUserKey(user User) Adapter {
+func ValidateUserKey() Adapter {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.WithFields(log.Fields{
+				"User": "test",
+			}).Info("Validating User")
+			h.ServeHTTP(w, r)
+		})
+	}
+}
+
+func Adapt(h http.Handler, adapters ...Adapter) http.Handler {
+	for _, adapter := range adapters {
+		h = adapter(h)
+	}
+	return h
 }
 
 func test(w http.ResponseWriter, r *http.Request) {
-
-	api_logger_fields := ApiLoggerFields{}
-	api_logger_fields.ip_address = r.RemoteAddr
-	api_logger_fields.method_type = r.Method
-
-	log.WithFields(log.Fields{
-		"Logger Fields": api_logger_fields,
-	}).Info("Test was hit")
-
 	w.Write([]byte("OK"))
 }
 
+/*
 func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 	api_logger_fields := ApiLoggerFields{}
 	api_logger_fields.ip_address = r.RemoteAddr
@@ -197,17 +223,19 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+*/
 func main() {
-	http.HandleFunc("/api/getallmovies", getAllMovies)
-	http.HandleFunc("/api/addmovie", addMovieToUserMovies)
-	http.HandleFunc("/api/test", test)
+	//http.HandleFunc("/api/getallmovies", getAllMovies)
+	//http.HandleFunc("/api/addmovie", addMovieToUserMovies)
+	http.Handle("/api/test", Adapt(test(), ValidateUserKey(), ApiCallLog()))
 	http.ListenAndServe(":8080", nil)
 }
 
 func respond(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
 	var buffer bytes.Buffer
-	if err = json.NewEncoder(&buffer).Encode(data); err != nil {
-		http.Error(w, err.Error(), http.StatueInternalServerError)
+	var err error
+	if err := json.NewEncoder(&buffer).Encode(data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(status)
@@ -216,4 +244,17 @@ func respond(w http.ResponseWriter, r *http.Request, status int, data interface{
 			"Error": err,
 		}).Error("Respond Error ->")
 	}
+}
+
+func decode(r *http.Request, data interface{}) error {
+	var err error
+	if err := json.NewDecoder(r.Body).Decode(data); err != nil {
+		return err
+	}
+
+	//if err = data.OK(); err != nil {
+	//		return err
+	//	}
+
+	return nil
 }

@@ -2,52 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 
 	"github.com/emculber/database_access/postgresql"
 )
 
 var db *sql.DB
-
-type OmdbapiData struct {
-	Id      int
-	Imdb_id string
-	Title   string
-	Year    string
-}
-
-type User struct {
-	Id       int
-	User_key string
-	Username string
-}
-
-type UsersMovie struct {
-	Id           int
-	User         User
-	Omdbapi      OmdbapiData
-	Movie_width  string
-	Movie_height string
-	Video_codac  string
-	Audio_codac  string
-	Container    string
-	Frame_rate   string
-	Aspect_ratio string
-}
-
-type UsersMovieJson struct {
-	Username      string
-	Movie_title   string
-	Movie_imdb_id string
-	Movie_width   string
-	Movie_height  string
-	Video_codac   string
-	Audio_codac   string
-	Container     string
-	Frame_rate    string
-	Aspect_ratio  string
-}
 
 func InitDatabase() {
 	dir, err := os.Getwd()
@@ -60,6 +20,7 @@ func InitDatabase() {
 	}
 }
 
+/*
 func InsertNewMovie(omdbapi OmdbapiData) (OmdbapiData, error) {
 	err := db.QueryRow(`insert into movie_list (imdb_id, movie_title, movie_year) values($1, $2, $3) returning id`, omdbapi.Imdb_id, omdbapi.Title, omdbapi.Year).Scan(&omdbapi.Id)
 	if err != nil {
@@ -98,3 +59,4 @@ func ReadUserMovies(user User) []UsersMovieJson {
 	}
 	return movies_list
 }
+*/

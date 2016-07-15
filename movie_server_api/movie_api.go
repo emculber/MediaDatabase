@@ -227,7 +227,7 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 func main() {
 	//http.HandleFunc("/api/getallmovies", getAllMovies)
 	//http.HandleFunc("/api/addmovie", addMovieToUserMovies)
-	http.Handle("/api/test", Adapt(test(), ValidateUserKey(), ApiCallLog()))
+	http.Handle("/api/test", Adapt(test, ValidateUserKey(), ApiCallLog()))
 	http.ListenAndServe(":8080", nil)
 }
 

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"net/http"
 	"os"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -34,4 +36,20 @@ func InitLogger() {
 		"Log level":  "Info",
 		"Log Output": log_file,
 	}).Info("Format, Level, Output set")
+}
+
+func AccessLog(inner http.Handler, name string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		inner.ServeHTTP(w, r)
+
+		log.WithFields(log.Fields{
+			"Method Type": r.Method,
+			"Request Url": r.RequestURI,
+			"IP":          r.RemoteAddr,
+			"Name":        name,
+			"Time":        time.Since(start),
+		}).Info("Accessing API")
+	})
 }

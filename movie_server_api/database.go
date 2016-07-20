@@ -2,12 +2,26 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 
 	"github.com/emculber/database_access/postgresql"
 )
 
 var db *sql.DB
+
+var databaseSchema = []string{
+	"CREATE TABLE registered_user(id serial primary key, username varchar)",
+	"CREATE TABLE role(id serial primary key, role varchar)",
+	"CREATE TABLE users_roles(id serial primary key, user_id integer references registered_user(id), role_id integer references role(id), key varchar)",
+	"CREATE TABLE permissions(id serial primary key, permission varchar)",
+	"CREATE TABLE role_permissions(id serial primary key, role_id integer references role(id), permissions_id integer references permissions(id), access varchar)",
+	"CREATE TABLE registered_movie(id serial primary key, imdb_id varchar, title varchar, year varchar)",
+	"CREATE TABLE movie_list(id serial primary key, registered_movie_id integer references registered_movie(id), user_id integer references registered_user(id), width varchar, height varchar, video_codac varchar, audio_codac varchar, container varchar, frame_rate varchar, aspect_ratio varchar)",
+	"CREATE TABLE accepted_movie(id serial primary key, user_requested_id integer references registered_user(id), user_accepted_id integer references registered_user(id), registered_movie_id integer references registered_movie(id))",
+	"CREATE TABLE exclude_movie(id serial primary key, user_id integer references registered_user(id), registered_movie_id integer references registered_movie(id))",
+	"CREATE TABLE requested_movie(id serial primary key, user_id integer references registered_user(id), registered_movie_id integer references registered_movie(id))",
+}
 
 func InitDatabase() {
 	dir, err := os.Getwd()
@@ -18,6 +32,15 @@ func InitDatabase() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func getUsername(key string) User {
+	statement := fmt.Sprintf("select registered_user.username from registered_user, user_roles where user_roles.key='%s'", key)
+	username, _, _ := postgresql_access.QueryDatabase(db, statement)
+	user := User{}
+	user.Username = username[0][0].(string)
+
+	return user
 }
 
 /*

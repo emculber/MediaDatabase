@@ -1,10 +1,12 @@
 package main
 
+import "errors"
+
 type RegisteredMovie struct {
-	Id      int
-	Imdb_id string
-	Title   string
-	Year    string
+	Id      int    `json:"-"`
+	Imdb_id string `json:"imdbID"`
+	Title   string `json:"Title"`
+	Year    string `json:"Year"`
 }
 
 type AcceptedMovie struct {
@@ -38,10 +40,10 @@ type UserRole struct {
 	Key    string
 }
 
-type UsersMovie struct {
+type MovieList struct {
 	Id              int
-	User            User
-	RegisteredMovie RequestedMovie
+	UserRole        UserRole
+	RegisteredMovie RegisteredMovie
 	Movie_width     string
 	Movie_height    string
 	Video_codac     string
@@ -51,9 +53,18 @@ type UsersMovie struct {
 	Aspect_ratio    string
 }
 
-func (userMovie *UsersMovie) OK() error {
-	if len(userMovie.Movie_width) == 0 {
-		return ErrRequired("Movie Width")
+type IncomingMovies struct {
+	userRole  UserRole
+	movieList []MovieList
+}
+
+func (movieList *MovieList) OK() error {
+	if len(movieList.Movie_width) == 0 {
+		return errors.New("Movie Width")
 	}
+	return nil
+}
+
+func (registeredMovie *RegisteredMovie) OK() error {
 	return nil
 }

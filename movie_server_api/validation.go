@@ -1,14 +1,10 @@
 package main
 
-import (
-	"fmt"
+import log "github.com/Sirupsen/logrus"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/emculber/database_access/postgresql"
-)
-
-func validateUserId(user User) (bool, User, error) {
-	err := db.QueryRow("select id, username, key from registered_users where key = $1", user.User_key).Scan(&user.Id, &user.Username, &user.User_key)
+func validateUserId(userRole UserRole) (bool, User, error) {
+	var user = User{}
+	err := db.QueryRow("select id, username, key from registered_users where key = $1", userRole.Key).Scan(&user.Id, &user.Username)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"User":  user,
@@ -24,19 +20,20 @@ func validateUserId(user User) (bool, User, error) {
 	return true, user, nil
 }
 
-func validateImdbId(omdbapi OmdbapiData) (bool, OmdbapiData, error) {
-	err := db.QueryRow("select id, imdb_id, movie_title, movie_year from movie_list where imdb_id = $1", omdbapi.Imdb_id).Scan(&omdbapi.Id, omdbapi.Imdb_id, omdbapi.Title, omdbapi.Year)
+func validateImdbId(registeredMovie RegisteredMovie) (bool, RegisteredMovie, error) {
+	err := db.QueryRow("select id, imdb_id, movie_title, movie_year from movie_list where imdb_id = $1", registeredMovie.Imdb_id).Scan(&registeredMovie.Id, registeredMovie.Imdb_id, registeredMovie.Title, registeredMovie.Year)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"Movie": omdbapi,
+			"Movie": registeredMovie,
 			"Error": err,
 		}).Error("ERROR -> Validating ImdbId Id")
-		return false, omdbapi, err
+		return false, registeredMovie, err
 	}
 
-	return true, omdbapi, nil
+	return true, registeredMovie, nil
 }
 
+/*
 func validateUsersMovie(users_movie UsersMovie) (bool, error) {
 	validate_users_movie_statment := fmt.Sprintf("select movie_list_id, user_id from users_movies, movie_list where users_movies.movie_list_id = movie_list.id and users_movies.movie_list_id=%s and users_movies.user_id = %s", users_movie.Omdbapi.Id, users_movie.User.Id)
 	isAdded, count, err := postgresql_access.QueryDatabase(db, validate_users_movie_statment)
@@ -51,3 +48,4 @@ func validateUsersMovie(users_movie UsersMovie) (bool, error) {
 	}
 	return false, err
 }
+*/

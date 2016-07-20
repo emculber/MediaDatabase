@@ -4,9 +4,9 @@ type Public interface {
 	Public() interface{}
 }
 
-func (u *UserRole) Public() interface{} {
+func (user *UserRole) Public() interface{} {
 	return map[string]interface{}{
-		"id":      u.Id.Encode(),
-		"user_id": u.UserId,
+		"id":      user.Id,
+		"user_id": user.UserId,
 	}
 }

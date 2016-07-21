@@ -84,6 +84,10 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 	movieList.Aspect_ratio = r.PostFormValue("aspect_ratio")
 
 	fmt.Println(movieList)
+
+	if err := movieList.OK(); err != nil {
+
+	}
 	/*
 		var isValidated bool
 		var err error

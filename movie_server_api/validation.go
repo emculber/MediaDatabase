@@ -2,7 +2,7 @@ package main
 
 import log "github.com/Sirupsen/logrus"
 
-func validateUserId(userRole UserRole) (bool, User, error) {
+func (userRole *UserRole) validate() error {
 	var user = User{}
 	err := db.QueryRow("select id, username, key from registered_users where key = $1", userRole.Key).Scan(&user.Id, &user.Username)
 	if err != nil {
@@ -10,7 +10,7 @@ func validateUserId(userRole UserRole) (bool, User, error) {
 			"User":  user,
 			"Error": err,
 		}).Error("ERROR -> Validating User Id")
-		return false, user, err
+		return err
 	}
 
 	log.WithFields(log.Fields{

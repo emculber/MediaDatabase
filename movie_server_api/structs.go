@@ -60,7 +60,25 @@ type IncomingMovies struct {
 
 func (movieList *MovieList) OK() error {
 	if len(movieList.Movie_width) == 0 {
-		return errors.New("Movie Width")
+		return errors.New("No Movie Width")
+	}
+	if len(movieList.Movie_height) == 0 {
+		return errors.New("No Movie Height")
+	}
+	if len(movieList.Video_codac) == 0 {
+		return errors.New("No Video Codac")
+	}
+	if len(movieList.Audio_codac) == 0 {
+		return errors.New("No Audio Codac")
+	}
+	if len(movieList.Container) == 0 {
+		return errors.New("No Container")
+	}
+	if len(movieList.Frame_rate) == 0 {
+		return errors.New("No Frame Rate")
+	}
+	if len(movieList.Aspect_ratio) == 0 {
+		return errors.New("No Aspect Ratio")
 	}
 	return nil
 }

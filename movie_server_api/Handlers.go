@@ -86,8 +86,15 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(movieList)
 
 	if err := movieList.OK(); err != nil {
-
+		fmt.Println(err)
 	}
+
+	if err := movieList.UserRole.validate(); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(permissions["movie"])
+
 	/*
 		var isValidated bool
 		var err error

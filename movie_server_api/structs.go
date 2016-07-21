@@ -33,11 +33,16 @@ type User struct {
 	Username string
 }
 
+type Role struct {
+	Id   int
+	Role string
+}
+
 type UserRole struct {
-	Id     int
-	UserId string
-	RoleId string
-	Key    string
+	Id   int
+	User User
+	Role Role
+	Key  string
 }
 
 type MovieList struct {

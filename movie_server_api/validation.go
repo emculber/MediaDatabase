@@ -17,7 +17,7 @@ func (userRole *UserRole) validate() error {
 		"User": user,
 	}).Info("User Accessed")
 
-	return true, user, nil
+	return nil
 }
 
 func validateImdbId(registeredMovie RegisteredMovie) (bool, RegisteredMovie, error) {

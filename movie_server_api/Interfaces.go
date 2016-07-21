@@ -7,6 +7,6 @@ type Public interface {
 func (user *UserRole) Public() interface{} {
 	return map[string]interface{}{
 		"id":      user.Id,
-		"user_id": user.UserId,
+		"user_id": user.User.Id,
 	}
 }

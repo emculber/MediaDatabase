@@ -15,7 +15,7 @@ func init() {
 	InitLogger()
 	InitDatabase()
 	InitExternalSources()
-	InitSecurity()
+	//InitSecurity()
 
 }
 

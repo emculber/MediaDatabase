@@ -38,11 +38,23 @@ type Role struct {
 	Role string
 }
 
+type Permissions struct {
+	Id         int
+	Permission string
+}
+
+type RolePermissions struct {
+	Id         int
+	Role       Role
+	Permission Permissions
+	access     int
+}
+
 type UserRole struct {
-	Id   int
-	User User
-	Role Role
-	Key  string
+	Id              int
+	User            User
+	RolePermissions RolePermissions
+	Key             string
 }
 
 type MovieList struct {

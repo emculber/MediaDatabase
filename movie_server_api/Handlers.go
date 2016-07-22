@@ -97,55 +97,32 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
+	if err := movieList.RegisteredMovie.validate(); err != nil {
+		fmt.Println(err)
+		if err := movieList.RegisteredMovie.getMovieData(); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(movieList.RegisteredMovie)
+		}
+		if err := movieList.RegisteredMovie.RegisterNewMovie(); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("Movie Registered")
+			fmt.Println(movieList.RegisteredMovie)
+		}
+	} else {
+		fmt.Println("Movie Already Registered")
+	}
+
+	if err := movieList.validate(); err != nil {
+		fmt.Println(err)
+		if err := movieList.RegisterNewMovie(); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(movieList)
+		}
+	}
 	/*
-		var isValidated bool
-		var err error
-		isValidated, users_movie.User, err = validateUserId(users_movie.User)
-		if err != nil || !isValidated {
-			log.WithFields(log.Fields{
-				"Logger Fields":    api_logger_fields,
-				"Error":            http.StatusBadRequest,
-				"Validation Error": err,
-				"User":             users_movie.User,
-				"Data":             users_movie,
-				"Registered User":  isValidated,
-			}).Error("Invalid User")
-			http.Error(w, "Invalid Request -> Invalid User", http.StatusBadRequest)
-			return
-		}
-
-		isValidated, users_movie.Omdbapi, err = validateImdbId(users_movie.Omdbapi)
-		if err != nil || !isValidated {
-			users_movie.Omdbapi, err = Omdbapi(users_movie.Omdbapi.Imdb_id)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"Logger Fields": api_logger_fields,
-					"Error":         err,
-					"Movie":         users_movie.Omdbapi,
-					"Data":          users_movie,
-				}).Error("Error Finding Movie")
-			}
-			users_movie.Omdbapi, err = InsertNewMovie(users_movie.Omdbapi)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"Logger Fields": api_logger_fields,
-					"Error":         err,
-					"Movie":         users_movie.Omdbapi,
-					"Data":          users_movie,
-				}).Error("Error Inserting Movie")
-			}
-			log.WithFields(log.Fields{
-				"Validation Error": err,
-				"Movie":            users_movie.Omdbapi,
-				"Data":             users_movie,
-				"Registered Movie": isValidated,
-			}).Info("Added movie")
-		}
-
-		log.WithFields(log.Fields{
-			"Data": users_movie,
-		}).Info("Adding Users Movie")
-
 		isValidated, err = validateUsersMovie(users_movie)
 		if isValidated {
 			log.WithFields(log.Fields{

@@ -1,51 +1,71 @@
 package main
 
-import log "github.com/Sirupsen/logrus"
+import (
+	"fmt"
+
+	log "github.com/Sirupsen/logrus"
+)
 
 func (userRole *UserRole) validate() error {
-	var user = User{}
-	err := db.QueryRow("select id, username, key from registered_users where key = $1", userRole.Key).Scan(&user.Id, &user.Username)
+	err := db.QueryRow(
+		"SELECT user_keys.id, "+
+			"registered_user.id, "+
+			"registered_user.username, "+
+			"role_permissions.id, "+
+			"role_permissions.access, "+
+			"role.id, "+
+			"role.role, "+
+			"permissions.id, "+
+			"permissions.permission "+
+			"FROM user_keys, "+
+			"registered_user, "+
+			"role_permissions, "+
+			"role, "+
+			"permissions "+
+			"WHERE user_keys.user_id             = registered_user.id "+
+			"AND user_keys.role_permissions_id   = role_permissions.id "+
+			"AND role_permissions.role_id        = role.id "+
+			"AND role_permissions.permissions_id = permissions.id "+
+			"AND user_keys.key                   = $1", &userRole.Key).Scan(&userRole.Id, &userRole.User.Id, &userRole.User.Username, &userRole.RolePermissions.Id, &userRole.RolePermissions.access, &userRole.RolePermissions.Role.Id, &userRole.RolePermissions.Role.Role, &userRole.RolePermissions.Permission.Id, &userRole.RolePermissions.Permission.Permission)
+
+	fmt.Println(userRole)
+
 	if err != nil {
 		log.WithFields(log.Fields{
-			"User":  user,
-			"Error": err,
+			"User Role": userRole,
+			"Error":     err,
 		}).Error("ERROR -> Validating User Id")
 		return err
 	}
 
 	log.WithFields(log.Fields{
-		"User": user,
+		"User Role": userRole,
 	}).Info("User Accessed")
 
 	return nil
 }
 
-func validateImdbId(registeredMovie RegisteredMovie) (bool, RegisteredMovie, error) {
-	err := db.QueryRow("select id, imdb_id, movie_title, movie_year from movie_list where imdb_id = $1", registeredMovie.Imdb_id).Scan(&registeredMovie.Id, registeredMovie.Imdb_id, registeredMovie.Title, registeredMovie.Year)
+func (registeredMovie *RegisteredMovie) validate() error {
+	err := db.QueryRow("select id, imdb_id, title, year from registered_movie where imdb_id = $1", registeredMovie.Imdb_id).Scan(&registeredMovie.Id, &registeredMovie.Imdb_id, &registeredMovie.Title, &registeredMovie.Year)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"Movie": registeredMovie,
 			"Error": err,
 		}).Error("ERROR -> Validating ImdbId Id")
-		return false, registeredMovie, err
+		return err
 	}
 
-	return true, registeredMovie, nil
+	return nil
 }
 
-/*
-func validateUsersMovie(users_movie UsersMovie) (bool, error) {
-	validate_users_movie_statment := fmt.Sprintf("select movie_list_id, user_id from users_movies, movie_list where users_movies.movie_list_id = movie_list.id and users_movies.movie_list_id=%s and users_movies.user_id = %s", users_movie.Omdbapi.Id, users_movie.User.Id)
-	isAdded, count, err := postgresql_access.QueryDatabase(db, validate_users_movie_statment)
-	if count != 0 || err != nil {
-		if isAdded[0][0] == users_movie.Omdbapi.Id && isAdded[0][1] == users_movie.User.Id {
-			return true, nil
-		} else {
-			return false, nil
-		}
-	} else {
-		return false, err
+func (movieList *MovieList) validate() error {
+	err := db.QueryRow("select movie_list.id from movie_list, registered_user, registered_movie where registered_movie.id = movie_list.registered_movie_id and registered_user.id = movie_list.user_id and movie_list.registered_movie_id=$1 and movie_list.user_id=$2", movieList.RegisteredMovie.Id, movieList.UserRole.User.Id).Scan(&movieList.Id)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("ERROR -> Validating ImdbId Id")
+		return err
 	}
-	return false, err
+
+	return nil
 }
-*/

@@ -76,6 +76,12 @@ type IncomingMovies struct {
 }
 
 func (movieList *MovieList) OK() error {
+	if len(movieList.UserRole.Key) == 0 {
+		return errors.New("No Key")
+	}
+	if len(movieList.RegisteredMovie.Imdb_id) == 0 {
+		return errors.New("No IMDB ID")
+	}
 	if len(movieList.Movie_width) == 0 {
 		return errors.New("No Movie Width")
 	}
@@ -100,6 +106,22 @@ func (movieList *MovieList) OK() error {
 	return nil
 }
 
+func (userRole *UserRole) OK() error {
+	if len(userRole.Key) == 0 {
+		return errors.New("No Key")
+	}
+	return nil
+}
+
 func (registeredMovie *RegisteredMovie) OK() error {
+	if len(registeredMovie.Imdb_id) == 0 {
+		return errors.New("No IMDB ID")
+	}
+	if len(registeredMovie.Title) == 0 {
+		return errors.New("No Title")
+	}
+	if len(registeredMovie.Year) == 0 {
+		return errors.New("No Year")
+	}
 	return nil
 }

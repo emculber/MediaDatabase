@@ -8,22 +8,20 @@ import (
 func InitExternalSources() {
 }
 
-func OmdbApi(imdb_id string) (RegisteredMovie, error) {
-	RegisteredMovie := RegisteredMovie{}
-
-	url := "http://www.omdbapi.com/?i=" + imdb_id
+func (registeredMovie *RegisteredMovie) getMovieData() error {
+	url := "http://www.omdbapi.com/?i=" + registeredMovie.Imdb_id
 	r, err := http.Get(url)
 	if err != nil {
-		return RegisteredMovie, err
+		return err
 	}
 	defer r.Body.Close()
 
-	if err := json.NewDecoder(r.Body).Decode(&RegisteredMovie); err != nil {
-		return RegisteredMovie, err
+	if err := json.NewDecoder(r.Body).Decode(&registeredMovie); err != nil {
+		return err
 	}
 
-	if err = RegisteredMovie.OK(); err != nil {
-		return RegisteredMovie, err
+	if err = registeredMovie.OK(); err != nil {
+		return err
 	}
-	return RegisteredMovie, nil
+	return nil
 }

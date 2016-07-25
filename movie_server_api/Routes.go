@@ -52,7 +52,7 @@ var routes = Routes{
 		"Check user key",
 		"POST",
 		"/api/checkuserkey",
-		checkUserKey,
+		getUserKey,
 	},
 	Route{
 		"Get All Movies for that User",

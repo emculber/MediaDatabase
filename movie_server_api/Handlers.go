@@ -25,11 +25,14 @@ func getUserKey(w http.ResponseWriter, r *http.Request) {
 	userRole := UserRole{}
 
 	r.ParseForm()
-	userRole.key = r.PostFormValue("key")
+	userRole.Key = r.PostFormValue("key")
 	userRole.User.Username = r.PostFormValue("username")
 
-	user := getUsername(key)
-	if err := json.NewEncoder(w).Encode(user); err != nil {
+	if err := userRole.getUserKey(); err != nil {
+		fmt.Println(err)
+	}
+
+	if err := json.NewEncoder(w).Encode(userRole.User); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Invalid Request!")
@@ -70,7 +73,7 @@ func getAllRegesteredMovies(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	movies := getAllMovies()
+	movies := userRole.getAllMovies()
 
 	if err := json.NewEncoder(w).Encode(movies.movieList); err != nil {
 		log.WithFields(log.Fields{

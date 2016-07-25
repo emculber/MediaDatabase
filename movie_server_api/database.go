@@ -34,9 +34,8 @@ func InitDatabase() {
 	}
 }
 
-func (userRole *UserRole) getUserKey() {
+func (userRole *UserRole) getUserKey() error {
 	err := db.QueryRow("select user_keys.key from user_keys, registered_user where user_keys.user_id = registered_user.id and registered_user.username = $1", userRole.User.Username).Scan(&userRole.Key)
-	err := db.QueryRow(`insert into registered_movie (imdb_id, title, year) values($1, $2, $3) returning id`, registeredMovie.Imdb_id, registeredMovie.Title, registeredMovie.Year).Scan(&registeredMovie.Id)
 	if err != nil {
 		return err
 	}
@@ -83,7 +82,7 @@ func (userRole *UserRole) ReadUserMovies() TransportMovies {
 	return movies_list
 }
 
-func getAllMovies() TransportMovies {
+func (userRole *UserRole) getAllMovies() TransportMovies {
 	statement := fmt.Sprintf("SELECT registered_movie.title, registered_movie.imdb_id, registered_movie.year, movie_list.width, movie_list.height, movie_list.video_codac, movie_list.audio_codac, movie_list.container, movie_list.frame_rate, movie_list.aspect_ratio FROM movie_list, user_keys, registered_movie WHERE movie_list.registered_movie_id = registered_movie.id AND user_keys.user_id = %d", userRole.User.Id)
 	//TODO: Error Checking
 	movies, _, _ := postgresql_access.QueryDatabase(db, statement)

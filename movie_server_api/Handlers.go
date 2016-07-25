@@ -9,14 +9,24 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+/*
+TODO:
+Get User Key,
+Get User list,
+Get User Movie List
+*/
+
 func test(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Welcome!")
 }
 
-func checkUserKey(w http.ResponseWriter, r *http.Request) {
+func getUserKey(w http.ResponseWriter, r *http.Request) {
+
+	userRole := UserRole{}
 
 	r.ParseForm()
-	key := r.PostFormValue("key")
+	userRole.key = r.PostFormValue("key")
+	userRole.User.Username = r.PostFormValue("username")
 
 	user := getUsername(key)
 	if err := json.NewEncoder(w).Encode(user); err != nil {
@@ -27,37 +37,46 @@ func checkUserKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAllMovies(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	r.ParseForm()
 
-	user := UserRole{}
-	user.Key = r.PostFormValue("user_key")
+	userRole := UserRole{}
+	userRole.Key = r.PostFormValue("key")
 
-	/*
-		var isValidated bool
-		var err error
-		isValidated, user, err = validateUserId(user)
-		if err != nil || !isValidated {
-			log.WithFields(log.Fields{
-				"Logger Fields":    api_logger_fields,
-				"Error":            http.StatusBadRequest,
-				"Validation Error": err,
-				"User":             user,
-				"Registered User":  isValidated,
-			}).Error("Invalid User")
-			http.Error(w, "Invalid Request -> Invalid User", http.StatusBadRequest)
-			return
-		}
+	if err := userRole.validate(); err != nil {
+		fmt.Println(err)
+	}
 
-		movies := ReadUserMovies(user)
+	movies := userRole.ReadUserMovies()
 
-		if err = json.NewEncoder(w).Encode(movies); err != nil {
-			log.WithFields(log.Fields{
-				"Logger Fields": api_logger_fields,
-				"Error":         err,
-			}).Error("Invalid Request!")
-			panic(err)
-		}
-	*/
+	if err := json.NewEncoder(w).Encode(movies.movieList); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Invalid Request!")
+	}
+}
+
+func getAllRegesteredMovies(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	r.ParseForm()
+
+	userRole := UserRole{}
+	userRole.Key = r.PostFormValue("key")
+	userRole.User.Username = r.PostFormValue("username")
+
+	if err := userRole.validate(); err != nil {
+		fmt.Println(err)
+	}
+
+	movies := getAllMovies()
+
+	if err := json.NewEncoder(w).Encode(movies.movieList); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Invalid Request!")
+	}
 }
 
 func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
@@ -122,29 +141,5 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(movieList)
 		}
 	}
-	/*
-		isValidated, err = validateUsersMovie(users_movie)
-		if isValidated {
-			log.WithFields(log.Fields{
-				"Logger Fields": api_logger_fields,
-				"Data":          users_movie,
-			}).Info("Movie Already Added")
-		} else {
-			users_movie, err = InsertNewUsersMovie(users_movie)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"Logger Fields":  api_logger_fields,
-					"Error":          http.StatusBadRequest,
-					"Database Error": err,
-					"Data":           users_movie,
-				}).Error("Error adding data to database")
-				http.Error(w, "Invalid Request -> Error Adding Movie", http.StatusBadRequest)
-				return
-			}
-			log.WithFields(log.Fields{
-				"Data": users_movie,
-			}).Info("Movie Added")
-		}
-	*/
 	w.Write([]byte("OK"))
 }

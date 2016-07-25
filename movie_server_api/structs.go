@@ -70,7 +70,7 @@ type MovieList struct {
 	Aspect_ratio    string
 }
 
-type IncomingMovies struct {
+type TransportMovies struct {
 	userRole  UserRole
 	movieList []MovieList
 }

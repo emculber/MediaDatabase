@@ -54,4 +54,16 @@ var routes = Routes{
 		"/api/checkuserkey",
 		checkUserKey,
 	},
+	Route{
+		"Get All Movies for that User",
+		"POST",
+		"/api/getmovies",
+		getAllMovies,
+	},
+	Route{
+		"Get All",
+		"POST",
+		"/api/getallregesteredmovies",
+		getAllMovies,
+	},
 }

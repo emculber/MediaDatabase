@@ -34,13 +34,13 @@ func InitDatabase() {
 	}
 }
 
-func getUsername(key string) User {
-	statement := fmt.Sprintf("select registered_user.username from registered_user, user_roles where user_roles.key='%s'", key)
-	username, _, _ := postgresql_access.QueryDatabase(db, statement)
-	user := User{}
-	user.Username = username[0][0].(string)
-
-	return user
+func (userRole *UserRole) getUserKey() {
+	err := db.QueryRow("select user_keys.key from user_keys, registered_user where user_keys.user_id = registered_user.id and registered_user.username = $1", userRole.User.Username).Scan(&userRole.Key)
+	err := db.QueryRow(`insert into registered_movie (imdb_id, title, year) values($1, $2, $3) returning id`, registeredMovie.Imdb_id, registeredMovie.Title, registeredMovie.Year).Scan(&registeredMovie.Id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (registeredMovie *RegisteredMovie) RegisterNewMovie() error {
@@ -59,17 +59,17 @@ func (movie *MovieList) RegisterNewMovie() error {
 	return nil
 }
 
-/*
-func ReadUserMovies(user User) []UsersMovieJson {
-	statement := fmt.Sprintf("SELECT registered_users.username, movie_list.movie_title, movie_list.imdb_id, users_movies.width, users_movies.height, users_movies.video_codac, users_movies.audio_codac, users_movies.container, users_movies.frame_rate, users_movies.aspect_ratio FROM users_movies, registered_users, movie_list WHERE user_id=%d AND registered_users.id = users_movies.user_id AND movie_list.id = users_movies.movie_list_id", user.Id)
+func (userRole *UserRole) ReadUserMovies() TransportMovies {
+	statement := fmt.Sprintf("SELECT registered_movie.title, registered_movie.imdb_id, registered_movie.year, movie_list.width, movie_list.height, movie_list.video_codac, movie_list.audio_codac, movie_list.container, movie_list.frame_rate, movie_list.aspect_ratio FROM movie_list, user_keys, registered_movie WHERE movie_list.registered_movie_id = registered_movie.id AND user_keys.user_id = %d", userRole.User.Id)
 	//TODO: Error Checking
 	movies, _, _ := postgresql_access.QueryDatabase(db, statement)
-	movies_list := []UsersMovieJson{}
+	movies_list := TransportMovies{}
+	movies_list.userRole = *userRole
 	for _, movie := range movies {
-		single_movie := UsersMovieJson{}
-		single_movie.Username = movie[0].(string)
-		single_movie.Movie_title = movie[1].(string)
-		single_movie.Movie_imdb_id = movie[2].(string)
+		single_movie := MovieList{}
+		single_movie.RegisteredMovie.Title = movie[0].(string)
+		single_movie.RegisteredMovie.Imdb_id = movie[1].(string)
+		single_movie.RegisteredMovie.Year = movie[2].(string)
 		single_movie.Movie_width = movie[3].(string)
 		single_movie.Movie_height = movie[4].(string)
 		single_movie.Video_codac = movie[5].(string)
@@ -77,9 +77,32 @@ func ReadUserMovies(user User) []UsersMovieJson {
 		single_movie.Container = movie[7].(string)
 		single_movie.Frame_rate = movie[8].(string)
 		single_movie.Aspect_ratio = movie[9].(string)
-		movies_list = append(movies_list, single_movie)
+		movies_list.movieList = append(movies_list.movieList, single_movie)
 
 	}
 	return movies_list
 }
-*/
+
+func getAllMovies() TransportMovies {
+	statement := fmt.Sprintf("SELECT registered_movie.title, registered_movie.imdb_id, registered_movie.year, movie_list.width, movie_list.height, movie_list.video_codac, movie_list.audio_codac, movie_list.container, movie_list.frame_rate, movie_list.aspect_ratio FROM movie_list, user_keys, registered_movie WHERE movie_list.registered_movie_id = registered_movie.id AND user_keys.user_id = %d", userRole.User.Id)
+	//TODO: Error Checking
+	movies, _, _ := postgresql_access.QueryDatabase(db, statement)
+	movies_list := TransportMovies{}
+	movies_list.userRole = *userRole
+	for _, movie := range movies {
+		single_movie := MovieList{}
+		single_movie.RegisteredMovie.Title = movie[0].(string)
+		single_movie.RegisteredMovie.Imdb_id = movie[1].(string)
+		single_movie.RegisteredMovie.Year = movie[2].(string)
+		single_movie.Movie_width = movie[3].(string)
+		single_movie.Movie_height = movie[4].(string)
+		single_movie.Video_codac = movie[5].(string)
+		single_movie.Audio_codac = movie[6].(string)
+		single_movie.Container = movie[7].(string)
+		single_movie.Frame_rate = movie[8].(string)
+		single_movie.Aspect_ratio = movie[9].(string)
+		movies_list.movieList = append(movies_list.movieList, single_movie)
+
+	}
+	return movies_list
+}

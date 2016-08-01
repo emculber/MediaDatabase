@@ -21,3 +21,7 @@ type Income struct {
 func (income *Income) OK() error {
 	return nil
 }
+
+func (wallet *Wallet) OK() error {
+	return nil
+}

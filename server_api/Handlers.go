@@ -22,17 +22,17 @@ func test(w http.ResponseWriter, r *http.Request) {
 
 func getUserKey(w http.ResponseWriter, r *http.Request) {
 
-	userRole := UserRole{}
+	userKeys := UserKeys{}
 
 	r.ParseForm()
-	userRole.Key = r.PostFormValue("key")
-	userRole.User.Username = r.PostFormValue("username")
+	userKeys.Key = r.PostFormValue("key")
+	userKeys.User.Username = r.PostFormValue("username")
 
-	if err := userRole.getUserKey(); err != nil {
+	if err := userKeys.getUserKey(); err != nil {
 		fmt.Println(err)
 	}
 
-	if err := json.NewEncoder(w).Encode(userRole.User); err != nil {
+	if err := json.NewEncoder(w).Encode(userKeys.User); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Invalid Request!")
@@ -44,14 +44,14 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	userRole := UserRole{}
-	userRole.Key = r.PostFormValue("key")
+	userKeys := UserKeys{}
+	userKeys.Key = r.PostFormValue("key")
 
-	if err := userRole.validate(); err != nil {
+	if err := userKeys.validate(); err != nil {
 		fmt.Println(err)
 	}
 
-	movies := userRole.ReadUserMovies()
+	movies := userKeys.ReadUserMovies()
 
 	if err := json.NewEncoder(w).Encode(movies.movieList); err != nil {
 		log.WithFields(log.Fields{
@@ -65,15 +65,15 @@ func getAllRegesteredMovies(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	userRole := UserRole{}
-	userRole.Key = r.PostFormValue("key")
-	userRole.User.Username = r.PostFormValue("username")
+	userKeys := UserKeys{}
+	userKeys.Key = r.PostFormValue("key")
+	userKeys.User.Username = r.PostFormValue("username")
 
-	if err := userRole.validate(); err != nil {
+	if err := userKeys.validate(); err != nil {
 		fmt.Println(err)
 	}
 
-	movies := userRole.getAllMovies()
+	movies := userKeys.getAllMovies()
 
 	if err := json.NewEncoder(w).Encode(movies.movieList); err != nil {
 		log.WithFields(log.Fields{
@@ -88,14 +88,14 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	userRole := UserRole{}
-	userRole.Key = r.PostFormValue("key")
+	userKeys := UserKeys{}
+	userKeys.Key = r.PostFormValue("key")
 
 	registeredMovie := RegisteredMovie{}
 	registeredMovie.Imdb_id = strings.ToLower(r.PostFormValue("imdb_id"))
 
 	movieList := MovieList{}
-	movieList.UserRole = userRole
+	movieList.UserKeys = userKeys
 	movieList.RegisteredMovie = registeredMovie
 	movieList.Movie_width = r.PostFormValue("movie_width")
 	movieList.Movie_height = r.PostFormValue("movie_height")
@@ -111,11 +111,11 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	if err := movieList.UserRole.validate(); err != nil {
+	if err := movieList.UserKeys.validate(); err != nil {
 		fmt.Println(err)
 	}
 
-	if err := movieList.UserRole.RolePermissions.checkAccess("write"); err != nil {
+	if err := movieList.UserKeys.RolePermissions.checkAccess("write"); err != nil {
 		fmt.Println(err)
 	}
 

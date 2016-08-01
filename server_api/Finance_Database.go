@@ -1,15 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/emculber/database_access/postgresql"
 )
 
-var db *sql.DB
-
-var databaseSchema = []string{
+var financeDatabaseSchema = []string{
 	"CREATE TABLE wallet(id serial primary key, user_id integer references registered_user(id), name varchar, percent real, current_amount real)",
 	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet integer references wallet(id), note varchar)",
 }
@@ -22,22 +19,22 @@ func (wallet *Wallet) RegisterNewWallet() error {
 	return nil
 }
 
-func (userKeys *UserKeys) getWalletList() error {
-	statement := fmt.Sprintf("select wallet.id, wallet.name, wallet.percent, wallet.current_amount from wallet where user_id=%d", userRole.User.Id)
+func (userKeys *UserKeys) getWalletList() []Wallet {
+	statement := fmt.Sprintf("select wallet.id, wallet.name, wallet.percent, wallet.current_amount from wallet where user_id=%d", userKeys.User.Id)
 	//TODO: Error Checking
 	wallets, _, _ := postgresql_access.QueryDatabase(db, statement)
-	wallet_list := []wallet{}
+	wallet_list := []Wallet{}
 
 	for _, wallet := range wallets {
-		single_wallet := wallet{}
-		single_wallet.Id = movie[0].(int)
-		single_wallet.Name = movie[1].(string)
-		single_wallet.Percent = movie[2].(float64)
-		single_wallet.CurrentAmount = movie[3].(float64)
+		single_wallet := Wallet{}
+		single_wallet.Id = wallet[0].(int)
+		single_wallet.Name = wallet[1].(string)
+		single_wallet.Percent = wallet[2].(float64)
+		single_wallet.CurrentAmount = wallet[3].(float64)
 		wallet_list = append(wallet_list, single_wallet)
 
 	}
-	return movies_list
+	return wallet_list
 }
 
 func (income *Income) RegisterNewIncome() error {

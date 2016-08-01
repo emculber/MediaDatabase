@@ -34,12 +34,15 @@ func InitDatabase() {
 	}
 }
 
-func (userRole *UserRole) getUserKey() error {
-	err := db.QueryRow("select user_keys.key from user_keys, registered_user where user_keys.user_id = registered_user.id and registered_user.username = $1", userRole.User.Username).Scan(&userRole.Key)
+func (userKeys *UserKeys) getUserKey() error {
+	err := db.QueryRow("select user_keys.key from user_keys, registered_user where user_keys.user_id = registered_user.id and registered_user.username = $1", userKeys.User.Username).Scan(&userKeys.Key)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (userKeys *UserKeys) getUserInfo() error {
 }
 
 func (registeredMovie *RegisteredMovie) RegisterNewMovie() error {
@@ -51,19 +54,19 @@ func (registeredMovie *RegisteredMovie) RegisterNewMovie() error {
 }
 
 func (movie *MovieList) RegisterNewMovie() error {
-	err := db.QueryRow(`insert into movie_list (registered_movie_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, aspect_ratio) values($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`, movie.RegisteredMovie.Id, movie.UserRole.User.Id, movie.Movie_width, movie.Movie_height, movie.Video_codac, movie.Audio_codac, movie.Container, movie.Frame_rate, movie.Aspect_ratio).Scan(&movie.Id)
+	err := db.QueryRow(`insert into movie_list (registered_movie_id, user_id, width, height, video_codac, audio_codac, container, frame_rate, aspect_ratio) values($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`, movie.RegisteredMovie.Id, movie.UserKeys.User.Id, movie.Movie_width, movie.Movie_height, movie.Video_codac, movie.Audio_codac, movie.Container, movie.Frame_rate, movie.Aspect_ratio).Scan(&movie.Id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (userRole *UserRole) ReadUserMovies() TransportMovies {
-	statement := fmt.Sprintf("SELECT registered_movie.title, registered_movie.imdb_id, registered_movie.year, movie_list.width, movie_list.height, movie_list.video_codac, movie_list.audio_codac, movie_list.container, movie_list.frame_rate, movie_list.aspect_ratio FROM movie_list, user_keys, registered_movie WHERE movie_list.registered_movie_id = registered_movie.id AND user_keys.user_id = %d", userRole.User.Id)
+func (userKeys *UserKeys) ReadUserMovies() TransportMovies {
+	statement := fmt.Sprintf("SELECT registered_movie.title, registered_movie.imdb_id, registered_movie.year, movie_list.width, movie_list.height, movie_list.video_codac, movie_list.audio_codac, movie_list.container, movie_list.frame_rate, movie_list.aspect_ratio FROM movie_list, user_keys, registered_movie WHERE movie_list.registered_movie_id = registered_movie.id AND user_keys.user_id = %d", userKeys.User.Id)
 	//TODO: Error Checking
 	movies, _, _ := postgresql_access.QueryDatabase(db, statement)
 	movies_list := TransportMovies{}
-	movies_list.userRole = *userRole
+	movies_list.userKeys = *userKeys
 	for _, movie := range movies {
 		single_movie := MovieList{}
 		single_movie.RegisteredMovie.Title = movie[0].(string)
@@ -82,12 +85,12 @@ func (userRole *UserRole) ReadUserMovies() TransportMovies {
 	return movies_list
 }
 
-func (userRole *UserRole) getAllMovies() TransportMovies {
-	statement := fmt.Sprintf("SELECT registered_movie.title, registered_movie.imdb_id, registered_movie.year, movie_list.width, movie_list.height, movie_list.video_codac, movie_list.audio_codac, movie_list.container, movie_list.frame_rate, movie_list.aspect_ratio FROM movie_list, user_keys, registered_movie WHERE movie_list.registered_movie_id = registered_movie.id AND user_keys.user_id = %d", userRole.User.Id)
+func (userKeys *UserKeys) getAllMovies() TransportMovies {
+	statement := fmt.Sprintf("SELECT registered_movie.title, registered_movie.imdb_id, registered_movie.year, movie_list.width, movie_list.height, movie_list.video_codac, movie_list.audio_codac, movie_list.container, movie_list.frame_rate, movie_list.aspect_ratio FROM movie_list, user_keys, registered_movie WHERE movie_list.registered_movie_id = registered_movie.id AND user_keys.user_id = %d", userKeys.User.Id)
 	//TODO: Error Checking
 	movies, _, _ := postgresql_access.QueryDatabase(db, statement)
 	movies_list := TransportMovies{}
-	movies_list.userRole = *userRole
+	movies_list.userKeys = *userKeys
 	for _, movie := range movies {
 		single_movie := MovieList{}
 		single_movie.RegisteredMovie.Title = movie[0].(string)

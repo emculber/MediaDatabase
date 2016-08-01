@@ -59,7 +59,7 @@ type UserKeys struct {
 
 type MovieList struct {
 	Id              int
-	UserRole        UserRole
+	UserKeys        UserKeys
 	RegisteredMovie RegisteredMovie
 	Movie_width     string
 	Movie_height    string
@@ -71,12 +71,12 @@ type MovieList struct {
 }
 
 type TransportMovies struct {
-	userRole  UserRole
+	userKeys  UserKeys
 	movieList []MovieList
 }
 
 func (movieList *MovieList) OK() error {
-	if len(movieList.UserRole.Key) == 0 {
+	if len(movieList.UserKeys.Key) == 0 {
 		return errors.New("No Key")
 	}
 	if len(movieList.RegisteredMovie.Imdb_id) == 0 {

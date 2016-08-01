@@ -6,7 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func (userRole *UserRole) validate() error {
+func (userKeys *UserKeys) validate() error {
 	err := db.QueryRow(
 		"SELECT user_keys.id, "+
 			"registered_user.id, "+
@@ -26,20 +26,20 @@ func (userRole *UserRole) validate() error {
 			"AND user_keys.role_permissions_id   = role_permissions.id "+
 			"AND role_permissions.role_id        = role.id "+
 			"AND role_permissions.permissions_id = permissions.id "+
-			"AND user_keys.key                   = $1", &userRole.Key).Scan(&userRole.Id, &userRole.User.Id, &userRole.User.Username, &userRole.RolePermissions.Id, &userRole.RolePermissions.access, &userRole.RolePermissions.Role.Id, &userRole.RolePermissions.Role.Role, &userRole.RolePermissions.Permission.Id, &userRole.RolePermissions.Permission.Permission)
+			"AND user_keys.key                   = $1", &userKeys.Key).Scan(&userKeys.Id, &userKeys.User.Id, &userKeys.User.Username, &userKeys.RolePermissions.Id, &userKeys.RolePermissions.access, &userKeys.RolePermissions.Role.Id, &userKeys.RolePermissions.Role.Role, &userKeys.RolePermissions.Permission.Id, &userKeys.RolePermissions.Permission.Permission)
 
-	fmt.Println(userRole)
+	fmt.Println(userKeys)
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"User Role": userRole,
+			"User Role": userKeys,
 			"Error":     err,
 		}).Error("ERROR -> Validating User Id")
 		return err
 	}
 
 	log.WithFields(log.Fields{
-		"User Role": userRole,
+		"User Role": userKeys,
 	}).Info("User Accessed")
 
 	return nil
@@ -59,7 +59,7 @@ func (registeredMovie *RegisteredMovie) validate() error {
 }
 
 func (movieList *MovieList) validate() error {
-	err := db.QueryRow("select movie_list.id from movie_list, registered_user, registered_movie where registered_movie.id = movie_list.registered_movie_id and registered_user.id = movie_list.user_id and movie_list.registered_movie_id=$1 and movie_list.user_id=$2", movieList.RegisteredMovie.Id, movieList.UserRole.User.Id).Scan(&movieList.Id)
+	err := db.QueryRow("select movie_list.id from movie_list, registered_user, registered_movie where registered_movie.id = movie_list.registered_movie_id and registered_user.id = movie_list.user_id and movie_list.registered_movie_id=$1 and movie_list.user_id=$2", movieList.RegisteredMovie.Id, movieList.UserKeys.User.Id).Scan(&movieList.Id)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,

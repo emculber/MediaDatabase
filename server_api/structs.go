@@ -50,7 +50,7 @@ type RolePermissions struct {
 	access     int
 }
 
-type UserRole struct {
+type UserKeys struct {
 	Id              int
 	User            User
 	RolePermissions RolePermissions
@@ -106,8 +106,8 @@ func (movieList *MovieList) OK() error {
 	return nil
 }
 
-func (userRole *UserRole) OK() error {
-	if len(userRole.Key) == 0 {
+func (userKeys *UserKeys) OK() error {
+	if len(userKeys.Key) == 0 {
 		return errors.New("No Key")
 	}
 	return nil

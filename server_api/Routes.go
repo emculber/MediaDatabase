@@ -66,4 +66,11 @@ var routes = Routes{
 		"/api/getallregesteredmovies",
 		getAllMovies,
 	},
+
+	Route{
+		"New Income",
+		"POST",
+		"/api/finance/newincome",
+		NewIncome,
+	},
 }

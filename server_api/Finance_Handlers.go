@@ -24,21 +24,26 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 
 	if err := income.UserKeys.validate(); err != nil {
 		fmt.Println(err)
+	} else {
+		income.Wallet.UserKeys = income.UserKeys
 	}
 
 	if err := income.UserKeys.RolePermissions.checkAccess("write"); err != nil {
 		fmt.Println(err)
 	}
 
-	// Get all user Info
-	// Get all wallet info
+	if err := income.Wallet.getWallet(); err != nil {
+		fmt.Println(err)
+	}
 
 	if err := income.RegisterNewIncome(); err != nil {
 		fmt.Println(err)
 	}
 
+	fmt.Println(income)
+
 	//TODO: Log Transaction
-	//TODO: Split Amount
+	income.SplitMoney()
 
 	w.Write([]byte("OK"))
 }

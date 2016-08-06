@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/emculber/database_access/postgresql"
 )
@@ -19,6 +20,22 @@ func (wallet *Wallet) RegisterNewWallet() error {
 	return nil
 }
 
+func (wallet *Wallet) getWallet() error {
+	err := db.QueryRow("select wallet.id, wallet.name, wallet.percent, wallet.current_amount from wallet where wallet.id = $1", wallet.Id).Scan(&wallet.Id, &wallet.Name, &wallet.Percent, &wallet.CurrentAmount)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (wallet *Wallet) updateWallet() error {
+	err := db.QueryRow("UPDATE wallet SET name = $1, percent = $2, current_amount = $3 WHERE id = $4 returning id", wallet.Name, wallet.Percent, wallet.CurrentAmount, wallet.Id).Scan(&wallet.Id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (userKeys *UserKeys) getWalletList() []Wallet {
 	statement := fmt.Sprintf("select wallet.id, wallet.name, wallet.percent, wallet.current_amount from wallet where user_id=%d", userKeys.User.Id)
 	//TODO: Error Checking
@@ -27,12 +44,12 @@ func (userKeys *UserKeys) getWalletList() []Wallet {
 
 	for _, wallet := range wallets {
 		single_wallet := Wallet{}
-		single_wallet.Id = wallet[0].(int)
+		single_wallet.UserKeys = *userKeys
+		single_wallet.Id, _ = strconv.Atoi(wallet[0].(string))
 		single_wallet.Name = wallet[1].(string)
-		single_wallet.Percent = wallet[2].(float64)
-		single_wallet.CurrentAmount = wallet[3].(float64)
+		single_wallet.Percent, _ = strconv.ParseFloat(wallet[2].(string), 64)
+		single_wallet.CurrentAmount, _ = strconv.ParseFloat(wallet[3].(string), 64)
 		wallet_list = append(wallet_list, single_wallet)
-
 	}
 	return wallet_list
 }

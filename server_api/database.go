@@ -43,6 +43,36 @@ func (userKeys *UserKeys) getUserKey() error {
 }
 
 func (userKeys *UserKeys) getUserInfo() error {
+	err := db.QueryRow(
+		"SELECT user_keys.id, "+
+			"registered_user.id, "+
+			"registered_user.username, "+
+			"role_permissions.id, "+
+			"role_permissions.access, "+
+			"role.id, "+
+			"role.role, "+
+			"permissions.id, "+
+			"permissions.permission "+
+			"FROM user_keys, "+
+			"registered_user, "+
+			"role_permissions, "+
+			"role, "+
+			"permissions "+
+			"WHERE user_keys.user_id             = registered_user.id "+
+			"AND user_keys.role_permissions_id   = role_permissions.id "+
+			"AND role_permissions.role_id        = role.id "+
+			"AND role_permissions.permissions_id = permissions.id "+
+			"AND user_keys.key                   = $1", &userKeys.Key).Scan(
+		&userKeys.Id,
+		&userKeys.User.Id,
+		&userKeys.User.Username,
+		&userKeys.RolePermissions.Id,
+		&userKeys.RolePermissions.access,
+		&userKeys.RolePermissions.Role.Id,
+		&userKeys.RolePermissions.Role.Role,
+		&userKeys.RolePermissions.Permission.Id,
+		&userKeys.RolePermissions.Permission.Permission)
+	return err
 }
 
 func (registeredMovie *RegisteredMovie) RegisterNewMovie() error {

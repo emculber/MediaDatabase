@@ -20,6 +20,13 @@ func test(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Welcome!")
 }
 
+func createTables(w http.ResponseWriter, r *http.Request) {
+	//TODO: Check for existing tables
+	//TODO: Only allow of superadmin/one person
+	fmt.Println("Creating Tables")
+	CreateTables()
+}
+
 func getUserKey(w http.ResponseWriter, r *http.Request) {
 
 	userKeys := UserKeys{}

@@ -12,6 +12,16 @@ var financeDatabaseSchema = []string{
 	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet integer references wallet(id), note varchar)",
 }
 
+func CreateFinanceTables() {
+	for _, table := range financeDatabaseSchema {
+		fmt.Println(table)
+		err := postgresql_access.CreateDatabaseTable(db, table)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
 func (wallet *Wallet) RegisterNewWallet() error {
 	err := db.QueryRow(`insert into wallet (user_id, name, percent, current_amount) values($1, $2, $3, $4) returning id`, wallet.UserKeys.User.Id, wallet.Name, wallet.Percent, wallet.CurrentAmount).Scan(&wallet.Id)
 	if err != nil {

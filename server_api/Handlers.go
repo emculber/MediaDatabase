@@ -25,6 +25,7 @@ func createTables(w http.ResponseWriter, r *http.Request) {
 	//TODO: Only allow of superadmin/one person
 	fmt.Println("Creating Tables")
 	CreateTables()
+	CreateFinanceTables()
 }
 
 func getUserKey(w http.ResponseWriter, r *http.Request) {

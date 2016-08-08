@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -32,6 +33,7 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
+	//TODO: Remove wallet id from income. unneeded
 	if err := income.Wallet.getWallet(); err != nil {
 		fmt.Println(err)
 	}
@@ -48,6 +50,29 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+func GetIncomes(w http.ResponseWriter, r *http.Request) {
+	userKeys := UserKeys{}
+
+	r.ParseForm()
+	userKeys.Key = r.PostFormValue("key")
+
+	if err := userKeys.validate(); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("User Validated")
+
+	incomes := userKeys.getIncomeList()
+
+	fmt.Println("income Grabbed")
+
+	if err := json.NewEncoder(w).Encode(incomes); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("income Sent")
+}
+
 func NewWallet(w http.ResponseWriter, r *http.Request) {
 	wallet := Wallet{}
 
@@ -60,7 +85,57 @@ func NewWallet(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	//TODO: Check If Percent is avalible
+	if err := wallet.UserKeys.validate(); err != nil {
+		fmt.Println(err)
+	}
+
+	if err := wallet.UserKeys.RolePermissions.checkAccess("write"); err != nil {
+		fmt.Println(err)
+	}
+
+	wallets := wallet.UserKeys.getWalletList()
+
+	for _, uWallet := range wallets {
+		if uWallet.Name == "unallocated" {
+			if uWallet.Percent < wallet.Percent {
+				wallet.Percent = uWallet.Percent
+				uWallet.Percent -= wallet.Percent
+				if err := wallet.RegisterNewWallet(); err != nil {
+					fmt.Println(err)
+				} else {
+					if err := uWallet.updateWallet(); err != nil {
+						fmt.Println(err)
+					}
+				}
+			} else {
+				uWallet.Percent -= wallet.Percent
+				if err := wallet.RegisterNewWallet(); err != nil {
+					fmt.Println(err)
+				} else {
+					if err := uWallet.updateWallet(); err != nil {
+						fmt.Println(err)
+					}
+				}
+			}
+		}
+	}
 
 	w.Write([]byte("OK"))
+}
+
+func GetWallets(w http.ResponseWriter, r *http.Request) {
+	userKeys := UserKeys{}
+
+	r.ParseForm()
+	userKeys.Key = r.PostFormValue("key")
+
+	if err := userKeys.validate(); err != nil {
+		fmt.Println(err)
+	}
+
+	wallets := userKeys.getWalletList()
+
+	if err := json.NewEncoder(w).Encode(wallets); err != nil {
+		fmt.Println(err)
+	}
 }

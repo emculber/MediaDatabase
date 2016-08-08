@@ -61,3 +61,21 @@ func (income *Income) RegisterNewIncome() error {
 	}
 	return nil
 }
+
+func (userKeys *UserKeys) getIncomeList() []Income {
+	statement := fmt.Sprintf("select income.id, income.date, income.amount, income.note FROM income WHERE user_id=%d", userKeys.User.Id)
+	//TODO: Error Checking
+	incomes, _, _ := postgresql_access.QueryDatabase(db, statement)
+	income_list := []Income{}
+
+	for _, income := range incomes {
+		single_income := Income{}
+		single_income.UserKeys = *userKeys
+		single_income.Id, _ = strconv.Atoi(income[0].(string))
+		single_income.Date = income[1].(string)
+		single_income.Amount, _ = strconv.ParseFloat(income[2].(string), 64)
+		single_income.Note, _ = income[3].(string)
+		income_list = append(income_list, single_income)
+	}
+	return income_list
+}

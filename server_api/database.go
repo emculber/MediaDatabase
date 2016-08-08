@@ -34,6 +34,16 @@ func InitDatabase() {
 	}
 }
 
+func CreateTables() {
+	for _, table := range databaseSchema {
+		fmt.Println(table)
+		err := postgresql_access.CreateDatabaseTable(db, table)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
 func (userKeys *UserKeys) getUserKey() error {
 	err := db.QueryRow("select user_keys.key from user_keys, registered_user where user_keys.user_id = registered_user.id and registered_user.username = $1", userKeys.User.Username).Scan(&userKeys.Key)
 	if err != nil {

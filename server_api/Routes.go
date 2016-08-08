@@ -43,6 +43,12 @@ var routes = Routes{
 		test,
 	},
 	Route{
+		"create tables",
+		"POST",
+		"/api/admin/createtables",
+		createTables,
+	},
+	Route{
 		"Add Movie To User Movies",
 		"POST",
 		"/api/addmovie",

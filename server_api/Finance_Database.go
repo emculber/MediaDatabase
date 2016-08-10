@@ -10,9 +10,11 @@ import (
 var financeDatabaseSchema = []string{
 	"CREATE TABLE wallet(id serial primary key, user_id integer references registered_user(id), name varchar, percent real, current_amount real)",
 	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet integer references wallet(id), note varchar)",
+	"CREATE TABLE expense(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet integer references wallet(id), note varchar)",
 }
 
 func CreateFinanceTables() {
+	//TODO: check if table exists
 	for _, table := range financeDatabaseSchema {
 		fmt.Println(table)
 		err := postgresql_access.CreateDatabaseTable(db, table)
@@ -64,28 +66,36 @@ func (userKeys *UserKeys) getWalletList() []Wallet {
 	return wallet_list
 }
 
-func (income *Income) RegisterNewIncome() error {
-	err := db.QueryRow(`insert into income (user_id, date, amount, wallet_id, note) values($1, $2, $3, $4, $5) returning id`, income.UserKeys.User.Id, income.Date, income.Amount, income.Wallet.Id, income.Note).Scan(&income.Id)
+func (transaction *Transaction) RegisterNewIncome() error {
+	err := db.QueryRow(`insert into income (user_id, date, amount, wallet_id, note) values($1, $2, $3, $4, $5) returning id`, transaction.UserKeys.User.Id, transaction.Date, transaction.Amount, transaction.Wallet.Id, transaction.Note).Scan(&transaction.Id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (userKeys *UserKeys) getIncomeList() []Income {
+func (userKeys *UserKeys) getIncomeList() []Transaction {
 	statement := fmt.Sprintf("select income.id, income.date, income.amount, income.note FROM income WHERE user_id=%d", userKeys.User.Id)
 	//TODO: Error Checking
-	incomes, _, _ := postgresql_access.QueryDatabase(db, statement)
-	income_list := []Income{}
+	transactions, _, _ := postgresql_access.QueryDatabase(db, statement)
+	transaction_list := []Transaction{}
 
-	for _, income := range incomes {
-		single_income := Income{}
-		single_income.UserKeys = *userKeys
-		single_income.Id, _ = strconv.Atoi(income[0].(string))
-		single_income.Date = income[1].(string)
-		single_income.Amount, _ = strconv.ParseFloat(income[2].(string), 64)
-		single_income.Note, _ = income[3].(string)
-		income_list = append(income_list, single_income)
+	for _, transaction := range transactions {
+		single_transaction := Transaction{}
+		single_transaction.UserKeys = *userKeys
+		single_transaction.Id, _ = strconv.Atoi(transaction[0].(string))
+		single_transaction.Date = transaction[1].(string)
+		single_transaction.Amount, _ = strconv.ParseFloat(transaction[2].(string), 64)
+		single_transaction.Note, _ = transaction[3].(string)
+		transaction_list = append(transaction_list, single_transaction)
 	}
-	return income_list
+	return transaction_list
+}
+
+func (transaction *Transaction) RegisterNewExpense() error {
+	err := db.QueryRow(`insert into expense (user_id, date, amount, wallet_id, note) values($1, $2, $3, $4, $5) returning id`, transaction.UserKeys.User.Id, transaction.Date, transaction.Amount, transaction.Wallet.Id, transaction.Note).Scan(&transaction.Id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

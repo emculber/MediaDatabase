@@ -86,6 +86,12 @@ var routes = Routes{
 		GetIncomes,
 	},
 	Route{
+		"New Expense",
+		"POST",
+		"/api/finance/newexpense",
+		NewExpense,
+	},
+	Route{
 		"New Wallet",
 		"POST",
 		"/api/finance/newwallet",

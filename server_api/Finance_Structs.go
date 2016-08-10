@@ -8,7 +8,7 @@ type Wallet struct {
 	CurrentAmount float64
 }
 
-type Income struct {
+type Transaction struct {
 	Id       int
 	UserKeys UserKeys
 	//Date     time
@@ -18,7 +18,8 @@ type Income struct {
 	Note   string
 }
 
-func (income *Income) OK() error {
+//TODO: Complete OK functions
+func (transaction *Transaction) OK() error {
 	return nil
 }
 

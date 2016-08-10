@@ -8,44 +8,43 @@ import (
 )
 
 func NewIncome(w http.ResponseWriter, r *http.Request) {
-	income := Income{}
+	transaction := Transaction{}
 
 	r.ParseForm()
-	income.UserKeys.Key = r.PostFormValue("key")
-	income.Date = r.PostFormValue("date")
-	income.Amount, _ = strconv.ParseFloat(r.PostFormValue("amount"), 64)
-	income.Wallet.Id, _ = strconv.Atoi(r.PostFormValue("wallet_id"))
-	income.Note = r.PostFormValue("note")
+	transaction.UserKeys.Key = r.PostFormValue("key")
+	transaction.Date = r.PostFormValue("date")
+	transaction.Amount, _ = strconv.ParseFloat(r.PostFormValue("amount"), 64)
+	transaction.Wallet.Id, _ = strconv.Atoi(r.PostFormValue("wallet_id"))
+	transaction.Note = r.PostFormValue("note")
 
-	fmt.Println(income)
+	fmt.Println(transaction)
 
-	if err := income.OK(); err != nil {
+	if err := transaction.OK(); err != nil {
 		fmt.Println(err)
 	}
 
-	if err := income.UserKeys.validate(); err != nil {
+	if err := transaction.UserKeys.validate(); err != nil {
 		fmt.Println(err)
 	} else {
-		income.Wallet.UserKeys = income.UserKeys
+		transaction.Wallet.UserKeys = transaction.UserKeys
 	}
 
-	if err := income.UserKeys.RolePermissions.checkAccess("write"); err != nil {
+	if err := transaction.UserKeys.RolePermissions.checkAccess("write"); err != nil {
 		fmt.Println(err)
 	}
 
-	//TODO: Remove wallet id from income. unneeded
-	if err := income.Wallet.getWallet(); err != nil {
+	if err := transaction.Wallet.getWallet(); err != nil {
 		fmt.Println(err)
 	}
 
-	if err := income.RegisterNewIncome(); err != nil {
+	if err := transaction.RegisterNewIncome(); err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println(income)
+	fmt.Println(transaction)
 
 	//TODO: Log Transaction
-	income.SplitMoney()
+	transaction.SplitMoney()
 
 	w.Write([]byte("OK"))
 }
@@ -62,15 +61,57 @@ func GetIncomes(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("User Validated")
 
-	incomes := userKeys.getIncomeList()
+	transactions := userKeys.getIncomeList()
 
-	fmt.Println("income Grabbed")
+	fmt.Println("transaction Grabbed")
 
-	if err := json.NewEncoder(w).Encode(incomes); err != nil {
+	if err := json.NewEncoder(w).Encode(transactions); err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println("income Sent")
+	fmt.Println("transaction Sent")
+}
+
+func NewExpense(w http.ResponseWriter, r *http.Request) {
+	transaction := Transaction{}
+
+	r.ParseForm()
+	transaction.UserKeys.Key = r.PostFormValue("key")
+	transaction.Date = r.PostFormValue("date")
+	transaction.Amount, _ = strconv.ParseFloat(r.PostFormValue("amount"), 64)
+	transaction.Wallet.Id, _ = strconv.Atoi(r.PostFormValue("wallet_id"))
+	transaction.Note = r.PostFormValue("note")
+
+	fmt.Println(transaction)
+
+	if err := transaction.OK(); err != nil {
+		fmt.Println(err)
+	}
+
+	if err := transaction.UserKeys.validate(); err != nil {
+		fmt.Println(err)
+	} else {
+		transaction.Wallet.UserKeys = transaction.UserKeys
+	}
+
+	if err := transaction.UserKeys.RolePermissions.checkAccess("write"); err != nil {
+		fmt.Println(err)
+	}
+
+	if err := transaction.Wallet.getWallet(); err != nil {
+		fmt.Println(err)
+	}
+
+	if err := transaction.RegisterNewExpense(); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(transaction)
+
+	//TODO: Log Transaction
+	transaction.TakeFromWallet()
+
+	w.Write([]byte("OK"))
 }
 
 func NewWallet(w http.ResponseWriter, r *http.Request) {

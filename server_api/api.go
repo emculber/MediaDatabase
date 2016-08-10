@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	_ "github.com/lib/pq"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
 
 type MuxRouter struct {
@@ -27,6 +27,7 @@ func main() {
 	muxRouter.Router = mux.NewRouter().StrictSlash(true)
 	muxRouter.GenericRouter()
 	muxRouter.AdminRouter()
+	muxRouter.UserRouter()
 	http.ListenAndServe(":8080", muxRouter.Router)
 }
 

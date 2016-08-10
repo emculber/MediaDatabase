@@ -32,6 +32,19 @@ func NewRouter() *mux.Router {
 			Handler(handler)
 	}
 
+	for _, route := range adminRoutes {
+		var handler http.Handler
+
+		handler = route.HandlerFunc
+		handler = AccessLog(handler, route.Name)
+
+		router.
+			Methods(route.Method).
+			Path(route.Pattern).
+			Name(route.Name).
+			Handler(handler)
+	}
+
 	return router
 }
 
@@ -41,12 +54,6 @@ var routes = Routes{
 		"POST",
 		"/test",
 		test,
-	},
-	Route{
-		"create tables",
-		"POST",
-		"/api/admin/createtables",
-		createTables,
 	},
 	Route{
 		"Add Movie To User Movies",

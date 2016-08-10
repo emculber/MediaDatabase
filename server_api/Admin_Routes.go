@@ -2,8 +2,6 @@ package main
 
 import (
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 type AdminRoute struct {
@@ -15,24 +13,21 @@ type AdminRoute struct {
 
 type AdminRoutes []AdminRoute
 
-func NewAdminRouter() *mux.Router {
+func (router *MuxRouter)AdminRouter() {
 
-	router := mux.NewRouter().StrictSlash(true)
-
-	for _, route := range routes {
+	for _, route := range adminRoutes {
 		var handler http.Handler
 
 		handler = route.HandlerFunc
 		handler = AccessLog(handler, route.Name)
 
 		router.
+			Router.
 			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
 	}
-
-	return router
 }
 
 var adminRoutes = AdminRoutes{

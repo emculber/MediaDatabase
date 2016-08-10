@@ -8,20 +8,26 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
+	"github.com/gorilla/mux"
 )
 
-func init() {
+type MuxRouter struct {
+	Router *mux.Router
+}
 
+func init() {
 	InitLogger()
 	InitDatabase()
 	InitExternalSources()
 	//InitSecurity()
-
 }
 
 func main() {
-	router := NewRouter()
-	http.ListenAndServe(":8080", router)
+	muxRouter := MuxRouter{}
+	muxRouter.Router = mux.NewRouter().StrictSlash(true)
+	muxRouter.GenericRouter()
+	muxRouter.AdminRouter()
+	http.ListenAndServe(":8080", muxRouter.Router)
 }
 
 func respond(w http.ResponseWriter, r *http.Request, status int, data interface{}) {

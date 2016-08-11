@@ -9,8 +9,8 @@ import (
 
 var financeDatabaseSchema = []string{
 	"CREATE TABLE wallet(id serial primary key, user_id integer references registered_user(id), name varchar, requested_percent real, percent real, current_amount real, limit real)",
-	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet integer references wallet(id), note varchar)",
-	"CREATE TABLE expense(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet integer references wallet(id), note varchar)",
+	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet_id integer references wallet(id), note varchar)",
+	"CREATE TABLE expense(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet_id integer references wallet(id), note varchar)",
 }
 
 func CreateFinanceTables() {

@@ -42,7 +42,7 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := transaction.RegisterNewIncome(); err != nil {
-		fmt.Println(err)
+		fmt.Println("Error registering new income ->", err)
 		return
 	}
 

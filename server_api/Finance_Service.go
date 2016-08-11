@@ -23,6 +23,7 @@ func (transaction *Transaction) SplitMoney() {
 				wallet.CurrentAmount = wallet_amount
 			}
 
+			fmt.Println("Wallet Name", wallet.Name)
 			fmt.Println("Wallet Decimal Percent", wallet.Percent/100)
 			fmt.Println("Wallet Amount", transaction.Amount*(wallet.Percent/100))
 

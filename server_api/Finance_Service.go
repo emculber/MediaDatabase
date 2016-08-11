@@ -15,7 +15,7 @@ func (transaction *Transaction) SplitMoney() {
 		if wallet.Percent <= 100 && wallet.Percent > 0 {
 
 			wallet_amount := wallet.CurrentAmount + (transaction.Amount * (wallet.Percent / 100))
-			if wallet.Limit < (wallet_amount + wallet.CurrentAmount) {
+			if (wallet.Limit < (wallet_amount + wallet.CurrentAmount)) && wallet.Limit != -1 {
 				wallet_diff += wallet_amount - wallet.Limit
 				wallet.CurrentAmount = wallet.Limit
 				wallet.Percent = 0

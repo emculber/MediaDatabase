@@ -127,7 +127,6 @@ func NewExpense(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewWallet(w http.ResponseWriter, r *http.Request) {
-	//TODO: Add a Requested Percent for a wallet
 	wallet := Wallet{}
 
 	r.ParseForm()
@@ -135,6 +134,7 @@ func NewWallet(w http.ResponseWriter, r *http.Request) {
 	wallet.Name = r.PostFormValue("name")
 	wallet.RequestedPercent, _ = strconv.ParseFloat(r.PostFormValue("percent"), 64)
 	wallet.Percent, _ = strconv.ParseFloat(r.PostFormValue("percent"), 64)
+	wallet.Limit, _ = strconv.ParseFloat(r.PostFormValue("limit"), 64)
 
 	if err := wallet.OK(); err != nil {
 		fmt.Println(err)

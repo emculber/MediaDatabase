@@ -25,7 +25,7 @@ func CreateFinanceTables() {
 }
 
 func (wallet *Wallet) RegisterNewWallet() error {
-	err := db.QueryRow(`insert into wallet (user_id, name, requested_percent, percent, current_amount, limit) values($1, $2, $3, $4, $5, $6) returning id`, wallet.UserKeys.User.Id, wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.Limit).Scan(&wallet.Id)
+	err := db.QueryRow(`insert into wallet (user_id, name, requested_percent, percent, current_amount, "limit") values($1, $2, $3, $4, $5, $6) returning id`, wallet.UserKeys.User.Id, wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.Limit).Scan(&wallet.Id)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (wallet *Wallet) getWallet() error {
 }
 
 func (wallet *Wallet) updateWallet() error {
-	err := db.QueryRow("UPDATE wallet SET name = $1, requested_percent=$2 percent = $3, current_amount = $4, limit=$5 WHERE id = $6 returning id", wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.Limit, wallet.Id).Scan(&wallet.Id)
+	err := db.QueryRow("UPDATE wallet SET name = $1, requested_percent=$2, percent = $3, current_amount = $4, limit=$5 WHERE id = $6 returning id", wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.Limit, wallet.Id).Scan(&wallet.Id)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,10 @@ func (wallet *Wallet) updateWallet() error {
 func (userKeys *UserKeys) getWalletList() []Wallet {
 	statement := fmt.Sprintf("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.limit from wallet where user_id=%d", userKeys.User.Id)
 	//TODO: Error Checking
-	wallets, _, _ := postgresql_access.QueryDatabase(db, statement)
+	wallets, _, err := postgresql_access.QueryDatabase(db, statement)
+	if err != nil {
+		fmt.Println("Error While getting wallet List ->", err)
+	}
 	wallet_list := []Wallet{}
 
 	for _, wallet := range wallets {

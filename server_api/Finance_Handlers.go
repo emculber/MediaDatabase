@@ -20,12 +20,12 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(transaction)
 
 	if err := transaction.OK(); err != nil {
-		fmt.Println(err)
+		fmt.Println("Error on transaction OK ->", err)
 		return
 	}
 
 	if err := transaction.UserKeys.validate(); err != nil {
-		fmt.Println(err)
+		fmt.Println("Error validating user key ->", err)
 		return
 	} else {
 		transaction.Wallet.UserKeys = transaction.UserKeys
@@ -37,7 +37,7 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := transaction.Wallet.getWallet(); err != nil {
-		fmt.Println(err)
+		fmt.Println("Error getting wallet ->", err)
 		return
 	}
 
@@ -159,19 +159,19 @@ func NewWallet(w http.ResponseWriter, r *http.Request) {
 				wallet.Percent = unallocatedWallet.Percent
 				unallocatedWallet.Percent -= wallet.Percent
 				if err := wallet.RegisterNewWallet(); err != nil {
-					fmt.Println(err)
+					fmt.Println("Error Registering new wallet ->", err)
 				} else {
 					if err := unallocatedWallet.updateWallet(); err != nil {
-						fmt.Println(err)
+						fmt.Println("Error updating unallocated Wallet ->", err)
 					}
 				}
 			} else {
 				unallocatedWallet.Percent -= wallet.Percent
 				if err := wallet.RegisterNewWallet(); err != nil {
-					fmt.Println(err)
+					fmt.Println("Error while registering new wallet ->", err)
 				} else {
 					if err := unallocatedWallet.updateWallet(); err != nil {
-						fmt.Println(err)
+						fmt.Println("Error updating unallocated Wallet ->", err)
 					}
 				}
 			}

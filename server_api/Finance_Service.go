@@ -27,7 +27,7 @@ func (transaction *Transaction) SplitMoney() {
 			fmt.Println("Wallet Amount", transaction.Amount*(wallet.Percent/100))
 
 			if err := wallet.updateWallet(); err != nil {
-				fmt.Println(err)
+				fmt.Println("Error while Updating wallet ->", err)
 			}
 			fmt.Println(wallet)
 			//TODO: Move this to its own sql statment
@@ -38,7 +38,7 @@ func (transaction *Transaction) SplitMoney() {
 	}
 	unallocatedWallet.CurrentAmount += wallet_diff
 	if err := unallocatedWallet.updateWallet(); err != nil {
-		fmt.Println(err)
+		fmt.Println("Error while Updating wallet ->", err)
 	}
 	fmt.Println("------")
 }

@@ -41,7 +41,7 @@ func (wallet *Wallet) getWallet() error {
 }
 
 func (wallet *Wallet) updateWallet() error {
-	err := db.QueryRow("UPDATE wallet SET name = $1, requested_percent=$2, percent = $3, current_amount = $4, limit=$5 WHERE id = $6 returning id", wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.Limit, wallet.Id).Scan(&wallet.Id)
+	err := db.QueryRow('UPDATE wallet SET name = $1, requested_percent=$2, percent = $3, current_amount = $4, "limit"=$5 WHERE id = $6 returning id', wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.Limit, wallet.Id).Scan(&wallet.Id)
 	if err != nil {
 		return err
 	}

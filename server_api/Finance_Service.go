@@ -7,7 +7,7 @@ func (transaction *Transaction) SplitMoney() {
 	fmt.Println(wallets)
 
 	var wallet_diff float64
-	var unallocatedWallet Wallet
+
 	for _, wallet := range wallets {
 		fmt.Println("------")
 		fmt.Println("Transaction Amount", transaction.Amount)
@@ -31,17 +31,17 @@ func (transaction *Transaction) SplitMoney() {
 				fmt.Println("Error while Updating wallet ->", err)
 			}
 			fmt.Println(wallet)
-			//TODO: Move this to its own sql statment
-			if wallet.Name == "unallocated" {
-				unallocatedWallet = wallet
-			}
 		}
 	}
+
+	unallocatedWallet := Wallet{Name: "unallocated"}
+	unallocatedWallet.getUnallocatedWallet()
 	unallocatedWallet.CurrentAmount += wallet_diff
 	if err := unallocatedWallet.updateWallet(); err != nil {
 		fmt.Println("Error while Updating wallet ->", err)
 	}
 	fmt.Println("------")
+	//TODO: Update wallets to accout for new percent if there is any
 }
 
 func (transaction *Transaction) TakeFromWallet() {
@@ -55,4 +55,7 @@ func (transaction *Transaction) TakeFromWallet() {
 		fmt.Println(err)
 	}
 	fmt.Println(transaction.Wallet)
+}
+
+func DisperseUnallocatedWalletPercent() {
 }

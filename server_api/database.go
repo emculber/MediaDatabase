@@ -45,6 +45,7 @@ func CreateTables() {
 }
 
 func (userKeys *UserKeys) getUserKey() error {
+	//TODO: Make the key column a unique key so there are do dups
 	err := db.QueryRow("select user_keys.key from user_keys, registered_user where user_keys.user_id = registered_user.id and registered_user.username = $1", userKeys.User.Username).Scan(&userKeys.Key)
 	if err != nil {
 		return err

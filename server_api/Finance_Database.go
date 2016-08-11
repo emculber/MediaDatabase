@@ -7,6 +7,8 @@ import (
 	"github.com/emculber/database_access/postgresql"
 )
 
+//TODO: Add in user_id to regerster rows to a single user
+
 var financeDatabaseSchema = []string{
 	"CREATE TABLE wallet(id serial primary key, user_id integer references registered_user(id), name varchar, requested_percent real, percent real, current_amount real, limit real)",
 	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet_id integer references wallet(id), note varchar)",
@@ -34,6 +36,14 @@ func (wallet *Wallet) RegisterNewWallet() error {
 
 func (wallet *Wallet) getWallet() error {
 	err := db.QueryRow("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.limit from wallet where wallet.id = $1", wallet.Id).Scan(&wallet.Id, &wallet.Name, &wallet.RequestedPercent, &wallet.Percent, &wallet.CurrentAmount, &wallet.Limit)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (wallet *Wallet) getUnallocatedWallet() error {
+	err := db.QueryRow("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.limit from wallet where wallet.name = $1", wallet.Name).Scan(&wallet.Id, &wallet.Name, &wallet.RequestedPercent, &wallet.Percent, &wallet.CurrentAmount, &wallet.Limit)
 	if err != nil {
 		return err
 	}

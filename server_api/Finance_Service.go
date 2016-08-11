@@ -41,7 +41,7 @@ func (transaction *Transaction) SplitMoney() {
 		fmt.Println("Error while Updating wallet ->", err)
 	}
 	fmt.Println("------")
-	//TODO: Update wallets to accout for new percent if there is any
+	transaction.UserKeys.DisperseUnallocatedWalletPercent()
 }
 
 func (transaction *Transaction) TakeFromWallet() {
@@ -57,5 +57,42 @@ func (transaction *Transaction) TakeFromWallet() {
 	fmt.Println(transaction.Wallet)
 }
 
-func DisperseUnallocatedWalletPercent() {
+func (userKeys *UserKeys) DisperseUnallocatedWalletPercent() {
+	unallocatedWallet := Wallet{Name: "unallocated"}
+	unallocatedWallet.getUnallocatedWallet()
+
+	wallets := userKeys.getWalletList()
+	walletsSetToUpdate := []Wallet{}
+	for _, wallet := range wallets {
+		fmt.Println("------")
+		fmt.Println("Wallet Requested Percent", wallet.RequestedPercent)
+		fmt.Println("Wallet Percent", wallet.Percent)
+
+		if (wallet.RequestedPercent != wallet.Percent) && wallet.RequestedPercent != -1 {
+			if wallet.Percent <= 100 && wallet.Percent >= 0 && wallet.Limit > wallet.CurrentAmount {
+				walletsSetToUpdate = append(walletsSetToUpdate, wallet)
+			}
+		}
+	}
+
+	splitPercent := unallocatedWallet.Percent / float64(len(walletsSetToUpdate))
+	var overflow float64 = 0
+	fmt.Println("Split Wallet Percent ->", splitPercent)
+
+	for _, wallet := range walletsSetToUpdate {
+		if wallet.RequestedPercent < (wallet.Percent + splitPercent) {
+			overflow += (wallet.Percent + splitPercent) - wallet.RequestedPercent
+			wallet.Percent = wallet.RequestedPercent
+		} else {
+			wallet.Percent += splitPercent
+			//unallocatedWallet.Percent -= splitPercent
+		}
+		if err := wallet.updateWallet(); err != nil {
+			fmt.Println("Error while Updating wallet ->", err)
+		}
+	}
+	unallocatedWallet.Percent = overflow
+	if err := unallocatedWallet.updateWallet(); err != nil {
+		fmt.Println("Error while Updating wallet ->", err)
+	}
 }

@@ -153,6 +153,7 @@ func NewWallet(w http.ResponseWriter, r *http.Request) {
 
 	wallets := wallet.UserKeys.getWalletList()
 
+	//TODO: Update to sql unallocated Wallet
 	for _, unallocatedWallet := range wallets {
 		if unallocatedWallet.Name == "unallocated" {
 			if unallocatedWallet.Percent < wallet.Percent {

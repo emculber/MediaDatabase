@@ -21,24 +21,29 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 
 	if err := transaction.OK(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	if err := transaction.UserKeys.validate(); err != nil {
 		fmt.Println(err)
+		return
 	} else {
 		transaction.Wallet.UserKeys = transaction.UserKeys
 	}
 
 	if err := transaction.UserKeys.RolePermissions.checkAccess("write"); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	if err := transaction.Wallet.getWallet(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	if err := transaction.RegisterNewIncome(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	fmt.Println(transaction)
@@ -57,6 +62,7 @@ func GetIncomes(w http.ResponseWriter, r *http.Request) {
 
 	if err := userKeys.validate(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	fmt.Println("User Validated")
@@ -67,6 +73,7 @@ func GetIncomes(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(transactions); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	fmt.Println("transaction Sent")
@@ -86,24 +93,29 @@ func NewExpense(w http.ResponseWriter, r *http.Request) {
 
 	if err := transaction.OK(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	if err := transaction.UserKeys.validate(); err != nil {
 		fmt.Println(err)
+		return
 	} else {
 		transaction.Wallet.UserKeys = transaction.UserKeys
 	}
 
 	if err := transaction.UserKeys.RolePermissions.checkAccess("write"); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	if err := transaction.Wallet.getWallet(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	if err := transaction.RegisterNewExpense(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	fmt.Println(transaction)

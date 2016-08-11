@@ -1,11 +1,12 @@
 package main
 
 type Wallet struct {
-	Id            int
-	UserKeys      UserKeys
-	Name          string
-	Percent       float64
-	CurrentAmount float64
+	Id               int
+	UserKeys         UserKeys
+	Name             string
+	RequestedPercent float64
+	Percent          float64
+	CurrentAmount    float64
 }
 
 type Transaction struct {

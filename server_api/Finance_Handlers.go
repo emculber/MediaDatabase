@@ -127,45 +127,50 @@ func NewExpense(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewWallet(w http.ResponseWriter, r *http.Request) {
+	//TODO: Add a Requested Percent for a wallet
 	wallet := Wallet{}
 
 	r.ParseForm()
 	wallet.UserKeys.Key = r.PostFormValue("key")
 	wallet.Name = r.PostFormValue("name")
+	wallet.RequestedPercent, _ = strconv.ParseFloat(r.PostFormValue("percent"), 64)
 	wallet.Percent, _ = strconv.ParseFloat(r.PostFormValue("percent"), 64)
 
 	if err := wallet.OK(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	if err := wallet.UserKeys.validate(); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	if err := wallet.UserKeys.RolePermissions.checkAccess("write"); err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	wallets := wallet.UserKeys.getWalletList()
 
-	for _, uWallet := range wallets {
-		if uWallet.Name == "unallocated" {
-			if uWallet.Percent < wallet.Percent {
-				wallet.Percent = uWallet.Percent
-				uWallet.Percent -= wallet.Percent
+	for _, unallocatedWallet := range wallets {
+		if unallocatedWallet.Name == "unallocated" {
+			if unallocatedWallet.Percent < wallet.Percent {
+				wallet.Percent = unallocatedWallet.Percent
+				unallocatedWallet.Percent -= wallet.Percent
 				if err := wallet.RegisterNewWallet(); err != nil {
 					fmt.Println(err)
 				} else {
-					if err := uWallet.updateWallet(); err != nil {
+					if err := unallocatedWallet.updateWallet(); err != nil {
 						fmt.Println(err)
 					}
 				}
 			} else {
-				uWallet.Percent -= wallet.Percent
+				unallocatedWallet.Percent -= wallet.Percent
 				if err := wallet.RegisterNewWallet(); err != nil {
 					fmt.Println(err)
 				} else {
-					if err := uWallet.updateWallet(); err != nil {
+					if err := unallocatedWallet.updateWallet(); err != nil {
 						fmt.Println(err)
 					}
 				}

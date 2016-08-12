@@ -29,7 +29,9 @@ func getUserKey(w http.ResponseWriter, r *http.Request) {
 	userKeys.User.Username = r.PostFormValue("username")
 
 	if err := userKeys.getUserKey(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Getting User Key")
 	}
 
 	if err := json.NewEncoder(w).Encode(userKeys.User); err != nil {
@@ -48,7 +50,9 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	userKeys.Key = r.PostFormValue("key")
 
 	if err := userKeys.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Validating User")
 	}
 
 	movies := userKeys.ReadUserMovies()
@@ -70,7 +74,9 @@ func getAllRegesteredMovies(w http.ResponseWriter, r *http.Request) {
 	userKeys.User.Username = r.PostFormValue("username")
 
 	if err := userKeys.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Validating User")
 	}
 
 	movies := userKeys.getAllMovies()
@@ -105,43 +111,68 @@ func addMovieToUserMovies(w http.ResponseWriter, r *http.Request) {
 	movieList.Frame_rate = r.PostFormValue("frame_rate")
 	movieList.Aspect_ratio = r.PostFormValue("aspect_ratio")
 
-	fmt.Println(movieList)
+	log.WithFields(log.Fields{
+		"Movies": movieList,
+	}).Info("Movie List")
 
 	if err := movieList.OK(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Movie List OK")
 	}
 
 	if err := movieList.UserKeys.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Validating User")
 	}
 
 	if err := movieList.UserKeys.RolePermissions.checkAccess("write"); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error")
 	}
 
 	if err := movieList.RegisteredMovie.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error")
 		if err := movieList.RegisteredMovie.getMovieData(); err != nil {
-			fmt.Println(err)
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error")
 		} else {
-			fmt.Println(movieList.RegisteredMovie)
+			log.WithFields(log.Fields{
+				"Movie": movieList.RegisteredMovie,
+			}).Info("Registered Movie")
 		}
 		if err := movieList.RegisteredMovie.RegisterNewMovie(); err != nil {
-			fmt.Println(err)
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error")
 		} else {
-			fmt.Println("Movie Registered")
-			fmt.Println(movieList.RegisteredMovie)
+			log.WithFields(log.Fields{
+				"Movie": movieList.RegisteredMovie,
+			}).Info("Registered Movie")
 		}
 	} else {
-		fmt.Println("Movie Already Registered")
+		log.WithFields(log.Fields{
+			"Movie": movieList.RegisteredMovie,
+		}).Info("Movie Already Registered")
 	}
 
 	if err := movieList.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error")
 		if err := movieList.RegisterNewMovie(); err != nil {
-			fmt.Println(err)
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error")
 		} else {
-			fmt.Println(movieList)
+			log.WithFields(log.Fields{
+				"Movies": movieList,
+			}).Info("Movie List")
 		}
 	}
 	w.Write([]byte("OK"))

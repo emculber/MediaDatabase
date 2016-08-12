@@ -3,7 +3,16 @@ package main
 import (
 	"errors"
 	"fmt"
+
+	log "github.com/Sirupsen/logrus"
 )
+
+func (rolePermissions *RolePermissions) checkPermissions(permissionNeeded string) error {
+	if permissionNeeded != rolePermissions.Permission.Permission {
+		return errors.New("Access Denied")
+	}
+	return nil
+}
 
 func (rolePermissions *RolePermissions) checkAccess(accessNeeded string) error {
 	binaryRepresentation := fmt.Sprintf("%b", rolePermissions.access)
@@ -19,7 +28,11 @@ func (rolePermissions *RolePermissions) checkAccess(accessNeeded string) error {
 		execute = binaryRepresentation[2] == '1'
 	}
 
-	fmt.Println(read, write, execute)
+	log.WithFields(log.Fields{
+		"Read":    read,
+		"Write":   write,
+		"Exicute": execute,
+	}).Info("Access")
 
 	if accessNeeded == "read" {
 		if read {

@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"math/rand"
-)
+import "math/rand"
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
@@ -13,5 +10,5 @@ func (userKeys *UserKeys) generateKey() {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 
-	fmt.Println(string(b))
+	//fmt.Println(string(b))
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/emculber/database_access/postgresql"
 )
 
@@ -36,10 +37,14 @@ func InitDatabase() {
 
 func CreateTables() {
 	for _, table := range databaseSchema {
-		fmt.Println(table)
+		log.WithFields(log.Fields{
+			"Table": table,
+		}).Info("Creating Table")
 		err := postgresql_access.CreateDatabaseTable(db, table)
 		if err != nil {
-			fmt.Println(err)
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Creating Table")
 		}
 	}
 }

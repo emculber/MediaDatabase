@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 func NewIncome(w http.ResponseWriter, r *http.Request) {
@@ -17,36 +18,46 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 	transaction.Wallet.Id, _ = strconv.Atoi(r.PostFormValue("wallet_id"))
 	transaction.Note = r.PostFormValue("note")
 
-	fmt.Println(transaction)
+	log.WithFields(log.Fields{
+		"Transaction": transaction,
+	}).Info("New Income")
 
 	if err := transaction.OK(); err != nil {
-		fmt.Println("Error on transaction OK ->", err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error on transaction OK")
 		return
 	}
 
 	if err := transaction.UserKeys.validate(); err != nil {
-		fmt.Println("Error validating user key ->", err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
 		return
 	} else {
 		transaction.Wallet.UserKeys = transaction.UserKeys
 	}
 
 	if err := transaction.UserKeys.RolePermissions.checkAccess("write"); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
 		return
 	}
 
 	if err := transaction.Wallet.getWallet(); err != nil {
-		fmt.Println("Error getting wallet ->", err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Getting Wallet")
 		return
 	}
 
 	if err := transaction.RegisterNewIncome(); err != nil {
-		fmt.Println("Error registering new income ->", err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Registering New Income")
 		return
 	}
-
-	fmt.Println(transaction)
 
 	//TODO: Log Transaction
 	transaction.SplitMoney()
@@ -61,22 +72,27 @@ func GetIncomes(w http.ResponseWriter, r *http.Request) {
 	userKeys.Key = r.PostFormValue("key")
 
 	if err := userKeys.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
 		return
 	}
 
-	fmt.Println("User Validated")
+	if err := transaction.UserKeys.RolePermissions.checkAccess("read"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
 
 	transactions := userKeys.getIncomeList()
 
-	fmt.Println("transaction Grabbed")
-
 	if err := json.NewEncoder(w).Encode(transactions); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Encoding Wallet")
 		return
 	}
-
-	fmt.Println("transaction Sent")
 }
 
 func NewExpense(w http.ResponseWriter, r *http.Request) {
@@ -89,36 +105,46 @@ func NewExpense(w http.ResponseWriter, r *http.Request) {
 	transaction.Wallet.Id, _ = strconv.Atoi(r.PostFormValue("wallet_id"))
 	transaction.Note = r.PostFormValue("note")
 
-	fmt.Println(transaction)
+	log.WithFields(log.Fields{
+		"Transaction": transaction,
+	}).Info("New Income")
 
 	if err := transaction.OK(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Transaction OK")
 		return
 	}
 
 	if err := transaction.UserKeys.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
 		return
 	} else {
 		transaction.Wallet.UserKeys = transaction.UserKeys
 	}
 
 	if err := transaction.UserKeys.RolePermissions.checkAccess("write"); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
 		return
 	}
 
 	if err := transaction.Wallet.getWallet(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Getting Wallet")
 		return
 	}
 
 	if err := transaction.RegisterNewExpense(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Register New Expense")
 		return
 	}
-
-	fmt.Println(transaction)
 
 	//TODO: Log Transaction
 	transaction.TakeFromWallet()
@@ -137,17 +163,23 @@ func NewWallet(w http.ResponseWriter, r *http.Request) {
 	wallet.WalletLimit, _ = strconv.ParseFloat(r.PostFormValue("limit"), 64)
 
 	if err := wallet.OK(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Transaction OK")
 		return
 	}
 
 	if err := wallet.UserKeys.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
 		return
 	}
 
 	if err := wallet.UserKeys.RolePermissions.checkAccess("write"); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
 		return
 	}
 
@@ -160,19 +192,31 @@ func NewWallet(w http.ResponseWriter, r *http.Request) {
 				wallet.Percent = unallocatedWallet.Percent
 				unallocatedWallet.Percent -= wallet.Percent
 				if err := wallet.RegisterNewWallet(); err != nil {
-					fmt.Println("Error Registering new wallet ->", err)
+					log.WithFields(log.Fields{
+						"Error": err,
+					}).Error("Error while registering new wallet")
+					return
 				} else {
 					if err := unallocatedWallet.updateWallet(); err != nil {
-						fmt.Println("Error updating unallocated Wallet ->", err)
+						log.WithFields(log.Fields{
+							"Error": err,
+						}).Error("Error updating unallocated Wallet")
+						return
 					}
 				}
 			} else {
 				unallocatedWallet.Percent -= wallet.Percent
 				if err := wallet.RegisterNewWallet(); err != nil {
-					fmt.Println("Error while registering new wallet ->", err)
+					log.WithFields(log.Fields{
+						"Error": err,
+					}).Error("Error while registering new wallet")
+					return
 				} else {
 					if err := unallocatedWallet.updateWallet(); err != nil {
-						fmt.Println("Error updating unallocated Wallet ->", err)
+						log.WithFields(log.Fields{
+							"Error": err,
+						}).Error("Error updating unallocated Wallet")
+						return
 					}
 				}
 			}
@@ -189,12 +233,25 @@ func GetWallets(w http.ResponseWriter, r *http.Request) {
 	userKeys.Key = r.PostFormValue("key")
 
 	if err := userKeys.validate(); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
+		return
+	}
+
+	if err := transaction.UserKeys.RolePermissions.checkAccess("read"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
 	}
 
 	wallets := userKeys.getWalletList()
 
 	if err := json.NewEncoder(w).Encode(wallets); err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Encoding Wallet")
+		return
 	}
 }

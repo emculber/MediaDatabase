@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/emculber/database_access/postgresql"
 )
 
@@ -18,10 +19,14 @@ var financeDatabaseSchema = []string{
 func CreateFinanceTables() {
 	//TODO: check if table exists
 	for _, table := range financeDatabaseSchema {
-		fmt.Println(table)
+		log.WithFields(log.Fields{
+			"Table": table,
+		}).Info("Creating Table")
 		err := postgresql_access.CreateDatabaseTable(db, table)
 		if err != nil {
-			fmt.Println(err)
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Creating Table")
 		}
 	}
 	userKeys := UserKeys{
@@ -39,9 +44,13 @@ func CreateFinanceTables() {
 		WalletLimit:      -1,
 	}
 	if err := wallet.getUnallocatedWallet(); err != nil {
-		fmt.Println("Error Getting Unallocated Wallet ->", err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Getting Unallocated Wallet")
 		if err := wallet.RegisterNewWallet(); err != nil {
-			fmt.Println("Error registering Unallocated Wallet ->", err)
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Registering Unallocated Wallet")
 		}
 	}
 }
@@ -83,7 +92,9 @@ func (userKeys *UserKeys) getWalletList() []Wallet {
 	//TODO: Error Checking
 	wallets, _, err := postgresql_access.QueryDatabase(db, statement)
 	if err != nil {
-		fmt.Println("Error While getting wallet List ->", err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error While Getting Wallet List")
 	}
 	wallet_list := []Wallet{}
 

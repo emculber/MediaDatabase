@@ -21,3 +21,8 @@ func createRole(w http.ResponseWriter, r *http.Request) {
 func createPermission(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Permissions Not Created Not Implimented")
 }
+
+func genkey(w http.ResponseWriter, r *http.Request) {
+	userKeys := UserKeys{}
+	userKeys.generateKey()
+}

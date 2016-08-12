@@ -89,7 +89,6 @@ func (userKeys *UserKeys) DisperseUnallocatedWalletPercent() {
 				wallet.Percent = wallet.RequestedPercent
 			} else {
 				wallet.Percent += splitPercent
-				//unallocatedWallet.Percent -= splitPercent
 			}
 			if err := wallet.updateWallet(); err != nil {
 				fmt.Println("Error while Updating wallet ->", err)

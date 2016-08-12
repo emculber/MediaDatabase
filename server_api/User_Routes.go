@@ -37,4 +37,10 @@ var userRoutes = UserRoutes{
 		"/api/user/createuser",
 		createUser,
 	},
+	UserRoute{
+		"Generate Key",
+		"POST",
+		"/api/user/generatekey",
+		genkey,
+	},
 }

@@ -134,7 +134,7 @@ func NewWallet(w http.ResponseWriter, r *http.Request) {
 	wallet.Name = r.PostFormValue("name")
 	wallet.RequestedPercent, _ = strconv.ParseFloat(r.PostFormValue("percent"), 64)
 	wallet.Percent, _ = strconv.ParseFloat(r.PostFormValue("percent"), 64)
-	wallet.Limit, _ = strconv.ParseFloat(r.PostFormValue("limit"), 64)
+	wallet.WalletLimit, _ = strconv.ParseFloat(r.PostFormValue("limit"), 64)
 
 	if err := wallet.OK(); err != nil {
 		fmt.Println(err)

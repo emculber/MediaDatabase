@@ -16,12 +16,12 @@ func (transaction *Transaction) SplitMoney() {
 		if wallet.Percent <= 100 && wallet.Percent > 0 {
 
 			wallet_amount := wallet.CurrentAmount + (transaction.Amount * (wallet.Percent / 100))
-			if (wallet.Limit < (wallet_amount + wallet.CurrentAmount)) && wallet.Limit != -1 {
+			if (wallet.WalletLimit < (wallet_amount + wallet.CurrentAmount)) && wallet.WalletLimit != -1 {
 
-				unallocatedWallet.CurrentAmount += wallet_amount - wallet.Limit
+				unallocatedWallet.CurrentAmount += wallet_amount - wallet.WalletLimit
 				unallocatedWallet.Percent += wallet.Percent
 
-				wallet.CurrentAmount = wallet.Limit
+				wallet.CurrentAmount = wallet.WalletLimit
 				wallet.Percent = 0
 			} else {
 				wallet.CurrentAmount = wallet_amount
@@ -70,7 +70,7 @@ func (userKeys *UserKeys) DisperseUnallocatedWalletPercent() {
 		fmt.Println("Wallet Percent", wallet.Percent)
 
 		if (wallet.RequestedPercent != wallet.Percent) && wallet.RequestedPercent != -1 {
-			if wallet.Percent <= 100 && wallet.Percent >= 0 && wallet.Limit > wallet.CurrentAmount {
+			if wallet.Percent <= 100 && wallet.Percent >= 0 && wallet.WalletLimit > wallet.CurrentAmount {
 				fmt.Println("Wallet getting added to Update ->", wallet)
 				walletsSetToUpdate = append(walletsSetToUpdate, wallet)
 			}

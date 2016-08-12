@@ -10,7 +10,7 @@ import (
 //TODO: Add in user_id to regerster rows to a single user
 
 var financeDatabaseSchema = []string{
-	"CREATE TABLE wallet(id serial primary key, user_id integer references registered_user(id), name varchar, requested_percent real, percent real, current_amount real, limit real)",
+	"CREATE TABLE wallet(id serial primary key, user_id integer references registered_user(id), name varchar, requested_percent real, percent real, current_amount real, wallet_limit real)",
 	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet_id integer references wallet(id), note varchar)",
 	"CREATE TABLE expense(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet_id integer references wallet(id), note varchar)",
 }
@@ -24,10 +24,30 @@ func CreateFinanceTables() {
 			fmt.Println(err)
 		}
 	}
+	userKeys := UserKeys{
+		Key: "test",
+	}
+
+	userKeys.validate()
+
+	wallet := Wallet{
+		UserKeys:         userKeys,
+		Name:             "unallocated",
+		RequestedPercent: -1,
+		Percent:          100,
+		CurrentAmount:    0,
+		WalletLimit:      -1,
+	}
+	if err := wallet.getUnallocatedWallet(); err != nil {
+		fmt.Println("Error Getting Unallocated Wallet ->", err)
+		if err := wallet.RegisterNewWallet(); err != nil {
+			fmt.Println("Error registering Unallocated Wallet ->", err)
+		}
+	}
 }
 
 func (wallet *Wallet) RegisterNewWallet() error {
-	err := db.QueryRow(`insert into wallet (user_id, name, requested_percent, percent, current_amount, "limit") values($1, $2, $3, $4, $5, $6) returning id`, wallet.UserKeys.User.Id, wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.Limit).Scan(&wallet.Id)
+	err := db.QueryRow(`insert into wallet (user_id, name, requested_percent, percent, current_amount, wallet_limit) values($1, $2, $3, $4, $5, $6) returning id`, wallet.UserKeys.User.Id, wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.WalletLimit).Scan(&wallet.Id)
 	if err != nil {
 		return err
 	}
@@ -35,7 +55,7 @@ func (wallet *Wallet) RegisterNewWallet() error {
 }
 
 func (wallet *Wallet) getWallet() error {
-	err := db.QueryRow("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.limit from wallet where wallet.id = $1", wallet.Id).Scan(&wallet.Id, &wallet.Name, &wallet.RequestedPercent, &wallet.Percent, &wallet.CurrentAmount, &wallet.Limit)
+	err := db.QueryRow("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.wallet_limit from wallet where wallet.id = $1", wallet.Id).Scan(&wallet.Id, &wallet.Name, &wallet.RequestedPercent, &wallet.Percent, &wallet.CurrentAmount, &wallet.WalletLimit)
 	if err != nil {
 		return err
 	}
@@ -43,7 +63,7 @@ func (wallet *Wallet) getWallet() error {
 }
 
 func (wallet *Wallet) getUnallocatedWallet() error {
-	err := db.QueryRow("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.limit from wallet where wallet.name = $1", wallet.Name).Scan(&wallet.Id, &wallet.Name, &wallet.RequestedPercent, &wallet.Percent, &wallet.CurrentAmount, &wallet.Limit)
+	err := db.QueryRow("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.wallet_limit from wallet where wallet.name = $1", wallet.Name).Scan(&wallet.Id, &wallet.Name, &wallet.RequestedPercent, &wallet.Percent, &wallet.CurrentAmount, &wallet.WalletLimit)
 	if err != nil {
 		return err
 	}
@@ -51,7 +71,7 @@ func (wallet *Wallet) getUnallocatedWallet() error {
 }
 
 func (wallet *Wallet) updateWallet() error {
-	err := db.QueryRow(`UPDATE wallet SET name = $1, requested_percent=$2, percent = $3, current_amount = $4, "limit"=$5 WHERE id = $6 returning id`, wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.Limit, wallet.Id).Scan(&wallet.Id)
+	err := db.QueryRow(`UPDATE wallet SET name = $1, requested_percent=$2, percent = $3, current_amount = $4, wallet_limit=$5 WHERE id = $6 returning id`, wallet.Name, wallet.RequestedPercent, wallet.Percent, wallet.CurrentAmount, wallet.WalletLimit, wallet.Id).Scan(&wallet.Id)
 	if err != nil {
 		return err
 	}
@@ -59,7 +79,7 @@ func (wallet *Wallet) updateWallet() error {
 }
 
 func (userKeys *UserKeys) getWalletList() []Wallet {
-	statement := fmt.Sprintf("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.limit from wallet where user_id=%d", userKeys.User.Id)
+	statement := fmt.Sprintf("select wallet.id, wallet.name, wallet.requested_percent, wallet.percent, wallet.current_amount, wallet.wallet_limit from wallet where user_id=%d", userKeys.User.Id)
 	//TODO: Error Checking
 	wallets, _, err := postgresql_access.QueryDatabase(db, statement)
 	if err != nil {
@@ -75,7 +95,7 @@ func (userKeys *UserKeys) getWalletList() []Wallet {
 		single_wallet.RequestedPercent, _ = strconv.ParseFloat(wallet[2].(string), 64)
 		single_wallet.Percent, _ = strconv.ParseFloat(wallet[3].(string), 64)
 		single_wallet.CurrentAmount, _ = strconv.ParseFloat(wallet[4].(string), 64)
-		single_wallet.Limit, _ = strconv.ParseFloat(wallet[5].(string), 64)
+		single_wallet.WalletLimit, _ = strconv.ParseFloat(wallet[5].(string), 64)
 		wallet_list = append(wallet_list, single_wallet)
 	}
 	return wallet_list

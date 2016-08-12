@@ -7,7 +7,7 @@ type Wallet struct {
 	RequestedPercent float64
 	Percent          float64
 	CurrentAmount    float64
-	Limit            float64
+	WalletLimit      float64
 }
 
 type Transaction struct {

@@ -78,7 +78,7 @@ func GetIncomes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := transaction.UserKeys.RolePermissions.checkAccess("read"); err != nil {
+	if err := userKeys.RolePermissions.checkAccess("read"); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Error Access Denied")
@@ -239,7 +239,7 @@ func GetWallets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := transaction.UserKeys.RolePermissions.checkAccess("read"); err != nil {
+	if err := userKeys.RolePermissions.checkAccess("read"); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Error Access Denied")

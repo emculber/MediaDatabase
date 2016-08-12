@@ -19,17 +19,17 @@ func createTables(w http.ResponseWriter, r *http.Request) {
 	if err := userKeys.validate(); err != nil {
 		log.WithFields(log.Fields{
 			"User Blame":      userKeys.User.Username,
-			"User Permission": userKeys.User.RolePermissions,
+			"User Permission": userKeys.RolePermissions,
 			"User Key":        userKeys.Key,
 			"Error":           err,
 		}).Error("Error Validating User")
 		return
 	}
 
-	if err := transaction.UserKeys.RolePermissions.checkAccess("execute"); err != nil {
+	if err := userKeys.RolePermissions.checkAccess("execute"); err != nil {
 		log.WithFields(log.Fields{
 			"User Blame":      userKeys.User.Username,
-			"User Permission": userKeys.User.RolePermissions,
+			"User Permission": userKeys.RolePermissions,
 			"User Key":        userKeys.Key,
 			"Error":           err,
 		}).Error("Error Checking Access")
@@ -38,7 +38,7 @@ func createTables(w http.ResponseWriter, r *http.Request) {
 
 	log.WithFields(log.Fields{
 		"User Blame":      userKeys.User.Username,
-		"User Permission": userKeys.User.RolePermissions,
+		"User Permission": userKeys.RolePermissions,
 		"User Key":        userKeys.Key,
 	}).Info("Running Create Tables")
 	CreateTables()

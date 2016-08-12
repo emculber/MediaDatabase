@@ -19,7 +19,7 @@ func (transaction *Transaction) SplitMoney() {
 		}).Info("Split Info")
 		if wallet.Percent <= 100 && wallet.Percent > 0 {
 
-			wallet_amount := wallet.CurrentAmount + (transaction.Amount * (wallet.Percent / 100))
+			wallet_amount := wallet.CurrentAmount + int(float64(transaction.Amount)*(wallet.Percent/100))
 			if (wallet.WalletLimit < (wallet_amount + wallet.CurrentAmount)) && wallet.WalletLimit != -1 {
 
 				unallocatedWallet.CurrentAmount += wallet_amount - wallet.WalletLimit
@@ -34,7 +34,7 @@ func (transaction *Transaction) SplitMoney() {
 			log.WithFields(log.Fields{
 				"Wallet Name":            wallet.Name,
 				"Wallet Decimal Percent": wallet.Percent / 100,
-				"Wallet Amount":          transaction.Amount * (wallet.Percent / 100),
+				"Wallet Amount":          float64(transaction.Amount) * (wallet.Percent / 100),
 			}).Info("Wallet Info")
 
 			if err := wallet.updateWallet(); err != nil {

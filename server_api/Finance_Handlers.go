@@ -14,7 +14,10 @@ func NewIncome(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	transaction.UserKeys.Key = r.PostFormValue("key")
 	transaction.Date = r.PostFormValue("date")
-	transaction.Amount, _ = strconv.ParseFloat(r.PostFormValue("amount"), 64)
+
+	float_amount, _ := strconv.ParseFloat(r.PostFormValue("amount"), 64)
+	transaction.Amount = int(float_amount * 100)
+
 	transaction.Wallet.Id, _ = strconv.Atoi(r.PostFormValue("wallet_id"))
 	transaction.Note = r.PostFormValue("note")
 
@@ -101,7 +104,10 @@ func NewExpense(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	transaction.UserKeys.Key = r.PostFormValue("key")
 	transaction.Date = r.PostFormValue("date")
-	transaction.Amount, _ = strconv.ParseFloat(r.PostFormValue("amount"), 64)
+
+	float_amount, _ := strconv.ParseFloat(r.PostFormValue("amount"), 64)
+	transaction.Amount = int(float_amount * 100)
+
 	transaction.Wallet.Id, _ = strconv.Atoi(r.PostFormValue("wallet_id"))
 	transaction.Note = r.PostFormValue("note")
 
@@ -160,7 +166,9 @@ func NewWallet(w http.ResponseWriter, r *http.Request) {
 	wallet.Name = r.PostFormValue("name")
 	wallet.RequestedPercent, _ = strconv.ParseFloat(r.PostFormValue("percent"), 64)
 	wallet.Percent, _ = strconv.ParseFloat(r.PostFormValue("percent"), 64)
-	wallet.WalletLimit, _ = strconv.ParseFloat(r.PostFormValue("limit"), 64)
+
+	float_limit, _ := strconv.ParseFloat(r.PostFormValue("limit"), 64)
+	wallet.WalletLimit = int(float_limit * 100)
 
 	if err := wallet.OK(); err != nil {
 		log.WithFields(log.Fields{

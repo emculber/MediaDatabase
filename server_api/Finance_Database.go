@@ -11,9 +11,9 @@ import (
 //TODO: Add in user_id to regerster rows to a single user
 
 var financeDatabaseSchema = []string{
-	"CREATE TABLE wallet(id serial primary key, user_id integer references registered_user(id), name varchar, requested_percent real, percent real, current_amount real, wallet_limit real)",
-	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet_id integer references wallet(id), note varchar)",
-	"CREATE TABLE expense(id serial primary key, user_id integer references registered_user(id), date varchar, amount real, wallet_id integer references wallet(id), note varchar)",
+	"CREATE TABLE wallet(id serial primary key, user_id integer references registered_user(id), name varchar, requested_percent real, percent real, current_amount integer, wallet_limit integer)",
+	"CREATE TABLE income(id serial primary key, user_id integer references registered_user(id), date varchar, amount integer, wallet_id integer references wallet(id), note varchar)",
+	"CREATE TABLE expense(id serial primary key, user_id integer references registered_user(id), date varchar, amount integer, wallet_id integer references wallet(id), note varchar)",
 }
 
 func CreateFinanceTables() {
@@ -105,8 +105,8 @@ func (userKeys *UserKeys) getWalletList() []Wallet {
 		single_wallet.Name = wallet[1].(string)
 		single_wallet.RequestedPercent, _ = strconv.ParseFloat(wallet[2].(string), 64)
 		single_wallet.Percent, _ = strconv.ParseFloat(wallet[3].(string), 64)
-		single_wallet.CurrentAmount, _ = strconv.ParseFloat(wallet[4].(string), 64)
-		single_wallet.WalletLimit, _ = strconv.ParseFloat(wallet[5].(string), 64)
+		single_wallet.CurrentAmount, _ = strconv.Atoi(wallet[4].(string))
+		single_wallet.WalletLimit, _ = strconv.Atoi(wallet[5].(string))
 		wallet_list = append(wallet_list, single_wallet)
 	}
 	return wallet_list
@@ -131,7 +131,7 @@ func (userKeys *UserKeys) getIncomeList() []Transaction {
 		single_transaction.UserKeys = *userKeys
 		single_transaction.Id, _ = strconv.Atoi(transaction[0].(string))
 		single_transaction.Date = transaction[1].(string)
-		single_transaction.Amount, _ = strconv.ParseFloat(transaction[2].(string), 64)
+		single_transaction.Amount, _ = strconv.Atoi(transaction[2].(string))
 		single_transaction.Note, _ = transaction[3].(string)
 		transaction_list = append(transaction_list, single_transaction)
 	}

@@ -6,8 +6,8 @@ type Wallet struct {
 	Name             string
 	RequestedPercent float64
 	Percent          float64
-	CurrentAmount    float64
-	WalletLimit      float64
+	CurrentAmount    int
+	WalletLimit      int
 }
 
 type Transaction struct {
@@ -15,7 +15,7 @@ type Transaction struct {
 	UserKeys UserKeys
 	//Date     time
 	Date   string
-	Amount float64
+	Amount int
 	Wallet Wallet
 	Note   string
 }

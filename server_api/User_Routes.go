@@ -38,6 +38,18 @@ var userRoutes = UserRoutes{
 		createUser,
 	},
 	UserRoute{
+		"create role",
+		"POST",
+		"/api/user/createrole",
+		createRole,
+	},
+	UserRoute{
+		"create permissions",
+		"POST",
+		"/api/user/createpermission",
+		createPermission,
+	},
+	UserRoute{
 		"Generate Key",
 		"POST",
 		"/api/user/generatekey",

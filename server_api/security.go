@@ -8,6 +8,11 @@ import (
 )
 
 func (rolePermissions *RolePermissions) checkPermissions(permissionNeeded string) error {
+
+	if rolePermissions.Permission.Permission == "all" || rolePermissions.Permission.Permission == "admin" {
+		return nil
+	}
+
 	if permissionNeeded != rolePermissions.Permission.Permission {
 		return errors.New("Access Denied")
 	}

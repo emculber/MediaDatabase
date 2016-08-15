@@ -41,6 +41,7 @@ func createTables(w http.ResponseWriter, r *http.Request) {
 		"User Permission": userKeys.RolePermissions,
 		"User Key":        userKeys.Key,
 	}).Info("Running Create Tables")
+	CreateUserTables()
 	CreateTables()
 	CreateFinanceTables()
 }

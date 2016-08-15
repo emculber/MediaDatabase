@@ -33,16 +33,6 @@ type User struct {
 	Username string
 }
 
-type Role struct {
-	Id   int
-	Role string
-}
-
-type Permissions struct {
-	Id         int
-	Permission string
-}
-
 type RolePermissions struct {
 	Id         int
 	Role       Role

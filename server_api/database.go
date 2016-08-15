@@ -12,11 +12,6 @@ import (
 var db *sql.DB
 
 var databaseSchema = []string{
-	"CREATE TABLE registered_user(id serial primary key, username varchar)",
-	"CREATE TABLE role(id serial primary key, role varchar)",
-	"CREATE TABLE permissions(id serial primary key, permission varchar)",
-	"CREATE TABLE role_permissions(id serial primary key, role_id integer references role(id), permissions_id integer references permissions(id), access varchar)",
-	"CREATE TABLE user_keys(id serial primary key, user_id integer references registered_user(id), role_permissions_id integer references role_permissions(id), key varchar)",
 	"CREATE TABLE registered_movie(id serial primary key, imdb_id varchar, title varchar, year varchar)",
 	"CREATE TABLE movie_list(id serial primary key, registered_movie_id integer references registered_movie(id), user_id integer references registered_user(id), width varchar, height varchar, video_codac varchar, audio_codac varchar, container varchar, frame_rate varchar, aspect_ratio varchar)",
 	"CREATE TABLE accepted_movie(id serial primary key, user_requested_id integer references registered_user(id), user_accepted_id integer references registered_user(id), registered_movie_id integer references registered_movie(id))",

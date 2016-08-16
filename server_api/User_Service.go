@@ -11,4 +11,5 @@ func (userKeys *UserKeys) generateKey() {
 	}
 
 	//fmt.Println(string(b))
+	userKeys.Key = string(b)
 }

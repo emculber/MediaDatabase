@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -13,7 +14,49 @@ func startup(w http.ResponseWriter, r *http.Request) {
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "User Not Created Not Implimented")
+	userKeys := UserKeys{}
+	user := User{}
+
+	r.ParseForm()
+	userKeys.Key = r.PostFormValue("key")
+	user.Username = r.PostFormValue("username")
+
+	if err := user.OK(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error on user OK")
+		return
+	}
+
+	if err := userKeys.validate(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkPermissions("user"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkAccess("write"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
+
+	if err := user.RegisterNewUser(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Registering New Role")
+		return
+	}
+
+	w.Write([]byte("OK"))
 }
 
 func createRole(w http.ResponseWriter, r *http.Request) {
@@ -111,4 +154,115 @@ func createPermission(w http.ResponseWriter, r *http.Request) {
 func genkey(w http.ResponseWriter, r *http.Request) {
 	userKeys := UserKeys{}
 	userKeys.generateKey()
+}
+
+func createAccess(w http.ResponseWriter, r *http.Request) {
+	userKeys := UserKeys{}
+	rolePermissions := RolePermissions{}
+
+	r.ParseForm()
+	userKeys.Key = r.PostFormValue("key")
+	rolePermissions.Role.Role = r.PostFormValue("role")
+	rolePermissions.Permission.Permission = r.PostFormValue("permission")
+	rolePermissions.access, _ = strconv.Atoi(r.PostFormValue("access"))
+
+	if err := rolePermissions.OK(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error on role permissions OK")
+		return
+	}
+
+	if err := userKeys.validate(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkPermissions("user"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkAccess("write"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
+
+	if err := rolePermissions.Role.GetRoleId(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Role Permissions Role")
+		return
+	}
+
+	if err := rolePermissions.Permission.GetPermissionsId(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Role Permissions Permissions")
+		return
+	}
+
+	if err := rolePermissions.RegisterNewRolePermissions(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Registering New Role")
+		return
+	}
+
+	w.Write([]byte("OK"))
+}
+
+func createUserKeys(w http.ResponseWriter, r *http.Request) {
+	userKeys := UserKeys{}
+	newUserKeys := UserKeys{}
+
+	r.ParseForm()
+	userKeys.Key = r.PostFormValue("key")
+	newUserKeys.RolePermissions.Id, _ = strconv.Atoi(r.PostFormValue("role_permissions_id"))
+	newUserKeys.User.Id, _ = strconv.Atoi(r.PostFormValue("user_id"))
+
+	if err := userKeys.OK(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error no user keys OK")
+		return
+	}
+
+	if err := userKeys.validate(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkPermissions("user"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkAccess("write"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
+
+	newUserKeys.generateKey()
+
+	if err := newUserKeys.RegisterNewUserKeys(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Registering New Role")
+		return
+	}
+
+	w.Write([]byte("OK"))
 }

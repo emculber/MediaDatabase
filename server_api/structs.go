@@ -28,18 +28,6 @@ type RequestedMovie struct {
 	RegisteredMovieId string
 }
 
-type User struct {
-	Id       int
-	Username string
-}
-
-type RolePermissions struct {
-	Id         int
-	Role       Role
-	Permission Permissions
-	access     int
-}
-
 type UserKeys struct {
 	Id              int
 	User            User

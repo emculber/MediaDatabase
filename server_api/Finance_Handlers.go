@@ -8,6 +8,31 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+func NewFinancalUser(w http.ResponseWriter, r *http.Request) {
+	/*
+		userKeys.validate()
+
+		wallet := Wallet{
+			UserKeys:         userKeys,
+			Name:             "unallocated",
+			RequestedPercent: -1,
+			Percent:          100,
+			CurrentAmount:    0,
+			WalletLimit:      -1,
+		}
+		if err := wallet.getUnallocatedWallet(); err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Getting Unallocated Wallet")
+			if err := wallet.RegisterNewWallet(); err != nil {
+				log.WithFields(log.Fields{
+					"Error": err,
+				}).Error("Error Registering Unallocated Wallet")
+			}
+		}
+	*/
+}
+
 func NewIncome(w http.ResponseWriter, r *http.Request) {
 	transaction := Transaction{}
 

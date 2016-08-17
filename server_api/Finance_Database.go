@@ -35,30 +35,6 @@ func CreateFinanceTables() {
 			}).Error("Error Creating Table")
 		}
 	}
-	userKeys := UserKeys{
-		Key: "test",
-	}
-
-	userKeys.validate()
-
-	wallet := Wallet{
-		UserKeys:         userKeys,
-		Name:             "unallocated",
-		RequestedPercent: -1,
-		Percent:          100,
-		CurrentAmount:    0,
-		WalletLimit:      -1,
-	}
-	if err := wallet.getUnallocatedWallet(); err != nil {
-		log.WithFields(log.Fields{
-			"Error": err,
-		}).Error("Error Getting Unallocated Wallet")
-		if err := wallet.RegisterNewWallet(); err != nil {
-			log.WithFields(log.Fields{
-				"Error": err,
-			}).Error("Error Registering Unallocated Wallet")
-		}
-	}
 }
 
 func DropFinanceTables() {

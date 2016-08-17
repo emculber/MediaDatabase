@@ -13,7 +13,7 @@ type AdminRoute struct {
 
 type AdminRoutes []AdminRoute
 
-func (router *MuxRouter)AdminRouter() {
+func (router *MuxRouter) AdminRouter() {
 
 	for _, route := range adminRoutes {
 		var handler http.Handler
@@ -37,5 +37,10 @@ var adminRoutes = AdminRoutes{
 		"/api/admin/createtables",
 		createTables,
 	},
+	AdminRoute{
+		"drop tables",
+		"POST",
+		"/api/admin/droptables",
+		dropTables,
+	},
 }
-

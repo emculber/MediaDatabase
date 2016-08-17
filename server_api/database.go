@@ -19,6 +19,14 @@ var databaseSchema = []string{
 	"CREATE TABLE requested_movie(id serial primary key, user_id integer references registered_user(id), registered_movie_id integer references registered_movie(id))",
 }
 
+var dropDatabaseSchema = []string{
+	"DROP TABLE requested_movie",
+	"DROP TABLE exclude_movie",
+	"DROP TABLE accepted_movie",
+	"DROP TABLE movie_list",
+	"DROP TABLE registered_movie",
+}
+
 func InitDatabase() {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -40,6 +48,21 @@ func CreateTables() {
 			log.WithFields(log.Fields{
 				"Error": err,
 			}).Error("Error Creating Table")
+		}
+	}
+}
+
+func DropTables() {
+	//TODO: check if table exists
+	for _, table := range dropDatabaseSchema {
+		log.WithFields(log.Fields{
+			"Table": table,
+		}).Info("Drop Table")
+		err := postgresql_access.CreateDatabaseTable(db, table)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Drop Table")
 		}
 	}
 }

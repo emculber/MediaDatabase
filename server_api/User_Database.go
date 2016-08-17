@@ -13,6 +13,14 @@ var userDatabaseSchema = []string{
 	"CREATE TABLE user_keys(id serial primary key, user_id integer references registered_user(id), role_permissions_id integer references role_permissions(id), key varchar)",
 }
 
+var userDropDatabaseSchema = []string{
+	"DROP TABLE user_keys",
+	"DROP TABLE role_permissions",
+	"DROP TABLE permissions",
+	"DROP TABLE role",
+	"DROP TABLE registered_user",
+}
+
 func CreateUserTables() {
 	for _, table := range userDatabaseSchema {
 		log.WithFields(log.Fields{
@@ -23,6 +31,20 @@ func CreateUserTables() {
 			log.WithFields(log.Fields{
 				"Error": err,
 			}).Error("Error Creating Table")
+		}
+	}
+}
+
+func DropUserTables() {
+	for _, table := range userDropDatabaseSchema {
+		log.WithFields(log.Fields{
+			"Table": table,
+		}).Info("Drop Table")
+		err := postgresql_access.CreateDatabaseTable(db, table)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Drop Table")
 		}
 	}
 }

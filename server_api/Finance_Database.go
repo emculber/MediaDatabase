@@ -16,6 +16,12 @@ var financeDatabaseSchema = []string{
 	"CREATE TABLE expense(id serial primary key, user_id integer references registered_user(id), date varchar, amount integer, wallet_id integer references wallet(id), note varchar)",
 }
 
+var financeDropDatabaseSchema = []string{
+	"DROP TABLE income",
+	"DROP TABLE expense",
+	"DROP TABLE wallet",
+}
+
 func CreateFinanceTables() {
 	//TODO: check if table exists
 	for _, table := range financeDatabaseSchema {
@@ -51,6 +57,21 @@ func CreateFinanceTables() {
 			log.WithFields(log.Fields{
 				"Error": err,
 			}).Error("Error Registering Unallocated Wallet")
+		}
+	}
+}
+
+func DropFinanceTables() {
+	//TODO: check if table exists
+	for _, table := range financeDropDatabaseSchema {
+		log.WithFields(log.Fields{
+			"Table": table,
+		}).Info("Drop Table")
+		err := postgresql_access.CreateDatabaseTable(db, table)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Drop Table")
 		}
 	}
 }

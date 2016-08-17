@@ -32,6 +32,12 @@ func (router *MuxRouter) UserRouter() {
 
 var userRoutes = UserRoutes{
 	UserRoute{
+		"startup",
+		"POST",
+		"/api/user/startup",
+		startup,
+	},
+	UserRoute{
 		"create user",
 		"POST",
 		"/api/user/createuser",

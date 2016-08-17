@@ -27,6 +27,30 @@ func CreateUserTables() {
 	}
 }
 
+func (userCounts *UserCounts) GetUserCounts() error {
+	err := db.QueryRow(`SELECT count(registered_user.id) FROM registered_user`).Scan(&userCounts.UserCount)
+	if err != nil {
+		userCounts.UserCount = 0
+	}
+	err = db.QueryRow(`SELECT count(role.id) FROM role`).Scan(&userCounts.RoleCount)
+	if err != nil {
+		userCounts.RoleCount = 0
+	}
+	err = db.QueryRow(`SELECT count(permissions.id) FROM permissions`).Scan(&userCounts.PermissionsCount)
+	if err != nil {
+		userCounts.PermissionsCount = 0
+	}
+	err = db.QueryRow(`SELECT count(role_permissions.id) FROM role_permissions`).Scan(&userCounts.RolePermissionsCount)
+	if err != nil {
+		userCounts.RolePermissionsCount = 0
+	}
+	err = db.QueryRow(`SELECT count(user_keys.id) FROM user_keys`).Scan(&userCounts.UserKeysCount)
+	if err != nil {
+		userCounts.UserKeysCount = 0
+	}
+	return nil
+}
+
 func (role *Role) RegisterNewRole() error {
 	err := db.QueryRow(`insert into role (role) values ($1) returning id`, role.Role).Scan(&role.Id)
 	if err != nil {

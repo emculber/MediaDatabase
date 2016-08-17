@@ -10,7 +10,69 @@ import (
 
 func startup(w http.ResponseWriter, r *http.Request) {
 	//TODO: Only allow this to run if there is no content available. gives full access
-	fmt.Fprintln(w, "startup Not Implimented")
+	userCounts := UserCounts{}
+	userCounts.GetUserCounts()
+	userKeys := UserKeys{}
+	fmt.Println(userCounts)
+	if userCounts.RoleCount == 0 {
+		role := Role{Role: "admin"}
+		if err := role.RegisterNewRole(); err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Registering New Role")
+			return
+		}
+		userKeys.RolePermissions.Role = role
+	} else {
+		fmt.Println("Role Count ->", userCounts.RoleCount)
+	}
+	if userCounts.PermissionsCount == 0 {
+		permissions := Permissions{Permission: "all"}
+		if err := permissions.RegisterNewPermissions(); err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Registering New Role")
+			return
+		}
+		userKeys.RolePermissions.Permission = permissions
+	} else {
+		fmt.Println("Permissions Count ->", userCounts.PermissionsCount)
+	}
+	if userCounts.UserCount == 0 {
+		user := User{Username: "admin"}
+		if err := user.RegisterNewUser(); err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Registering New Role")
+			return
+		}
+		userKeys.User = user
+	} else {
+		fmt.Println("User Count ->", userCounts.UserCount)
+	}
+	if userCounts.RolePermissionsCount == 0 {
+		userKeys.RolePermissions.access = 7
+		if err := userKeys.RolePermissions.RegisterNewRolePermissions(); err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Registering New Role")
+			return
+		}
+	} else {
+		fmt.Println("Role Permissions count ->", userCounts.RolePermissionsCount)
+	}
+	if userCounts.UserKeysCount == 0 {
+		userKeys.generateKey()
+
+		if err := userKeys.RegisterNewUserKeys(); err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Registering New Role")
+			return
+		}
+	} else {
+		fmt.Println("User Keys Count ->", userCounts.UserKeysCount)
+	}
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {

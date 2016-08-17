@@ -2,6 +2,14 @@ package main
 
 import "errors"
 
+type UserCounts struct {
+	RoleCount            int
+	PermissionsCount     int
+	UserCount            int
+	RolePermissionsCount int
+	UserKeysCount        int
+}
+
 type Role struct {
 	Id   int
 	Role string

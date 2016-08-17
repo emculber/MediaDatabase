@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -13,7 +12,13 @@ func startup(w http.ResponseWriter, r *http.Request) {
 	userCounts := UserCounts{}
 	userCounts.GetUserCounts()
 	userKeys := UserKeys{}
-	fmt.Println(userCounts)
+	log.WithFields(log.Fields{
+		"Role Count":             userCounts.RoleCount,
+		"Permissions Count":      userCounts.PermissionsCount,
+		"User Count":             userCounts.UserCount,
+		"Role Permissions Count": userCounts.RolePermissionsCount,
+		"User Keys Count":        userCounts.UserKeysCount,
+	}).Info("User Counts")
 	if userCounts.RoleCount == 0 {
 		role := Role{Role: "admin"}
 		if err := role.RegisterNewRole(); err != nil {
@@ -23,8 +28,6 @@ func startup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		userKeys.RolePermissions.Role = role
-	} else {
-		fmt.Println("Role Count ->", userCounts.RoleCount)
 	}
 	if userCounts.PermissionsCount == 0 {
 		permissions := Permissions{Permission: "all"}
@@ -35,8 +38,6 @@ func startup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		userKeys.RolePermissions.Permission = permissions
-	} else {
-		fmt.Println("Permissions Count ->", userCounts.PermissionsCount)
 	}
 	if userCounts.UserCount == 0 {
 		user := User{Username: "admin"}
@@ -47,8 +48,6 @@ func startup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		userKeys.User = user
-	} else {
-		fmt.Println("User Count ->", userCounts.UserCount)
 	}
 	if userCounts.RolePermissionsCount == 0 {
 		userKeys.RolePermissions.access = 7
@@ -58,8 +57,6 @@ func startup(w http.ResponseWriter, r *http.Request) {
 			}).Error("Error Registering New Role")
 			return
 		}
-	} else {
-		fmt.Println("Role Permissions count ->", userCounts.RolePermissionsCount)
 	}
 	if userCounts.UserKeysCount == 0 {
 		userKeys.generateKey()
@@ -70,8 +67,6 @@ func startup(w http.ResponseWriter, r *http.Request) {
 			}).Error("Error Registering New Role")
 			return
 		}
-	} else {
-		fmt.Println("User Keys Count ->", userCounts.UserKeysCount)
 	}
 }
 

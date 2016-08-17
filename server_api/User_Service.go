@@ -10,6 +10,5 @@ func (userKeys *UserKeys) generateKey() {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 
-	//fmt.Println(string(b))
 	userKeys.Key = string(b)
 }

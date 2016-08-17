@@ -4,7 +4,6 @@ import log "github.com/Sirupsen/logrus"
 
 func (userKeys *UserKeys) validate() error {
 	err := userKeys.getUserInfo()
-	//fmt.Println(userKeys)
 
 	if err != nil {
 		log.WithFields(log.Fields{

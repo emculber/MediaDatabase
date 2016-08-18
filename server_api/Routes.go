@@ -13,7 +13,7 @@ type Route struct {
 
 type Routes []Route
 
-func (router *MuxRouter)GenericRouter() {
+func (router *MuxRouter) GenericRouter() {
 
 	for _, route := range routes {
 		var handler http.Handler
@@ -62,6 +62,18 @@ var routes = Routes{
 		getAllMovies,
 	},
 
+	Route{
+		"Setup Finance",
+		"POST",
+		"/api/finance/setup",
+		SetupFinance,
+	},
+	Route{
+		"New Finance User",
+		"POST",
+		"/api/finance/newuser",
+		NewFinancalUser,
+	},
 	Route{
 		"New Income",
 		"POST",

@@ -2,13 +2,110 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 )
 
+func SetupFinance(w http.ResponseWriter, r *http.Request) {
+	userKeys := UserKeys{}
+
+	r.ParseForm()
+	userKeys.Key = r.PostFormValue("key")
+
+	if err := userKeys.validate(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkPermissions("admin"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Permissions Access Denied")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkAccess("execute"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Role Access Denied")
+		return
+	}
+
+	financeRolePermissions := RolePermissions{}
+	financeRolePermissions.Role.Role = "Finance"
+	financeRolePermissions.Permission.Permission = "Financal_RW"
+	financeRolePermissions.access = 3
+
+	if err := financeRolePermissions.Role.RegisterNewRole(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Registering New Role")
+		return
+	}
+	if err := financeRolePermissions.Permission.RegisterNewPermissions(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Registering New Role")
+		return
+	}
+	if err := financeRolePermissions.RegisterNewRolePermissions(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Registering New Role")
+		return
+	}
+
+	w.Write([]byte("OK"))
+}
+
 func NewFinancalUser(w http.ResponseWriter, r *http.Request) {
+	userKeys := UserKeys{}
+	newFinancalUser := UserKeys{}
+
+	r.ParseForm()
+	userKeys.Key = r.PostFormValue("key")
+
+	newFinancalUser.RolePermissions.Id, _ = strconv.Atoi(r.PostFormValue("role_permissions_id"))
+
+	if err := userKeys.validate(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error validating user key")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkPermissions("general"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
+
+	if err := userKeys.RolePermissions.checkAccess("execute"); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Access Denied")
+		return
+	}
+
+	newFinancalUser.User = userKeys.User
+	newFinancalUser.generateKey()
+
+	fmt.Println(newFinancalUser)
+
+	if err := newFinancalUser.RegisterNewUserKeys(); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Registering New User Key")
+		return
+	}
+
+	w.Write([]byte("OK"))
 	/*
 		userKeys.validate()
 

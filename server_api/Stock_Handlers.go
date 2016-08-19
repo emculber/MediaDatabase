@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -63,5 +64,30 @@ func createTicker(w http.ResponseWriter, r *http.Request) {
 		}).Error("Error Registering New Ticker")
 		return
 	}
+	w.Write([]byte("OK"))
+}
+
+func createTickers(w http.ResponseWriter, r *http.Request) {
+	tickers := []Tickers{}
+
+	if r.Body == nil {
+		http.Error(w, "Please send a request body", 400)
+		return
+	}
+	err := json.NewDecoder(r.Body).Decode(&tickers)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	for _, ticker := range tickers {
+		if err := ticker.RegisterNewTicker(); err != nil {
+			log.WithFields(log.Fields{
+				"Ticker": ticker,
+				"Error":  err,
+			}).Error("Error Registering New Ticker")
+			return
+		}
+	}
+
 	w.Write([]byte("OK"))
 }

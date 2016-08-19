@@ -47,6 +47,7 @@ func createTables(w http.ResponseWriter, r *http.Request) {
 	CreateUserTables()
 	CreateTables()
 	CreateFinanceTables()
+	CreateStockTables()
 }
 
 func dropTables(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +86,7 @@ func dropTables(w http.ResponseWriter, r *http.Request) {
 		"User Key":        userKeys.Key,
 	}).Info("Running Create Tables")
 
+	DropStockTables()
 	DropFinanceTables()
 	DropTables()
 	DropUserTables()

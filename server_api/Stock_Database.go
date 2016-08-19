@@ -46,7 +46,7 @@ func DropStockTables() {
 }
 
 func (exchange *Exchange) RegisterNewExchange() error {
-	err := db.QueryRow(`insert into exchange (exchange) values($1) returning id`, exchange.Exchange).Scan(&exchange.Id)
+	err := db.QueryRow(`insert into exchange (name) values($1) returning id`, exchange.Exchange).Scan(&exchange.Id)
 	if err != nil {
 		return err
 	}

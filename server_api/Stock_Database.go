@@ -6,7 +6,7 @@ import (
 )
 
 var stockDatabaseSchema = []string{
-	"CREATE TABLE exchange(id SERIAL PRIMARY KEY, name VARCHAR(60))",
+	"CREATE TABLE exchange(id SERIAL PRIMARY KEY, name VARCHAR(256))",
 	"CREATE TABLE tickers(id SERIAL PRIMARY KEY, symbol VARCHAR(10), name VARCHAR(60), exchange_id INTEGER REFERENCES exchange(id))",
 }
 

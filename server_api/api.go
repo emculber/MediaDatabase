@@ -28,6 +28,7 @@ func main() {
 	muxRouter.GenericRouter()
 	muxRouter.AdminRouter()
 	muxRouter.UserRouter()
+	muxRouter.StockRouter()
 	http.ListenAndServe(":8080", muxRouter.Router)
 }
 

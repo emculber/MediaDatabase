@@ -47,6 +47,18 @@ var stockRoutes = StockRoutes{
 		"Add tickers",
 		"POST",
 		"/api/stock/createtickers",
-		createTickers,
+		sendTickers,
+	},
+	StockRoute{
+		"Get All tickers",
+		"GET",
+		"/api/stock/gettickers",
+		getAllTickers,
+	},
+	StockRoute{
+		"Add prices",
+		"POST",
+		"/api/stock/createprices",
+		createPrices,
 	},
 }

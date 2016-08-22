@@ -3,8 +3,29 @@ package main
 import "errors"
 
 type Exchange struct {
-	Id       int
-	Exchange string
+	Id   int
+	Name string
+}
+
+type TickerList struct {
+	Timestamp int
+	Tickers   []Tickers
+}
+
+type TickerAudit struct {
+	Id                        int
+	AuditTimestamp            int64
+	TickerListUpdateTimestamp int
+	AddedCount                int
+	ChangeCount               int
+}
+
+type TickerUpdate struct {
+	Id              int
+	TickerAudit     TickerAudit
+	UpdateTimestamp int64
+	UpdateType      string
+	Ticker          Tickers
 }
 
 type Tickers struct {
@@ -12,10 +33,22 @@ type Tickers struct {
 	Symbol   string
 	Name     string
 	Exchange Exchange
+	Archived string
+}
+
+type Prices struct {
+	Id        int
+	Ticker    Tickers
+	Timestamp int
+	Close     float64
+	High      float64
+	Low       float64
+	Open      float64
+	Volume    int
 }
 
 func (exchange *Exchange) OK() error {
-	if len(exchange.Exchange) == 0 {
+	if len(exchange.Name) == 0 {
 		return errors.New("No Exchange")
 	}
 	return nil

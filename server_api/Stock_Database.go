@@ -1,16 +1,25 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/emculber/database_access/postgresql"
 )
 
 var stockDatabaseSchema = []string{
 	"CREATE TABLE exchange(id SERIAL PRIMARY KEY, name VARCHAR(60))",
-	"CREATE TABLE tickers(id SERIAL PRIMARY KEY, symbol VARCHAR(10), name VARCHAR(256), exchange_id INTEGER REFERENCES exchange(id))",
+	"CREATE TABLE tickers(id SERIAL PRIMARY KEY, symbol VARCHAR(10), name VARCHAR(256), exchange_id INTEGER REFERENCES exchange(id), archived VARCHAR(1))",
+	"CREATE TABLE ticker_audit(id SERIAL PRIMARY KEY, audit_timestamp INTEGER, ticker_list_update_timestamp BIGINT, added_count INTEGER, change_count INTEGER)",
+	"CREATE TABLE ticker_updates(id SERIAL PRIMARY KEY, ticker_audit_id INTEGER REFERENCES ticker_audit(id), update_timestamp INTEGER, update_type VARCHAR(60), ticker_id INTEGER REFERENCES tickers(id))",
+	"CREATE TABLE ticker_prices (id SERIAL PRIMARY KEY, ticker_id INTEGER REFERENCES tickers(id), stock_timestamp INTEGER, close REAL, high REAL, low REAL, open REAL, volume INTEGER)",
 }
 
 var stockDropDatabaseSchema = []string{
+	"DROP TABLE ticker_prices",
+	"DROP TABLE ticker_audit",
+	"DROP TABLE ticker_updates",
 	"DROP TABLE tickers",
 	"DROP TABLE exchange",
 }
@@ -46,7 +55,15 @@ func DropStockTables() {
 }
 
 func (exchange *Exchange) RegisterNewExchange() error {
-	err := db.QueryRow(`insert into exchange (name) values($1) returning id`, exchange.Exchange).Scan(&exchange.Id)
+	err := db.QueryRow(`insert into exchange (name) values($1) returning id`, exchange.Name).Scan(&exchange.Id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (prices *Prices) RegisterNewPrice() error {
+	err := db.QueryRow(`insert into ticker_prices (ticker_id, stock_timestamp, close, high, low, open, volume) values($1, $2, $3, $4, $5, $6, $7) returning id`, prices.Ticker.Id, prices.Timestamp, prices.Close, prices.High, prices.Low, prices.Open, prices.Volume).Scan(&prices.Id)
 	if err != nil {
 		return err
 	}
@@ -54,9 +71,54 @@ func (exchange *Exchange) RegisterNewExchange() error {
 }
 
 func (tickers *Tickers) RegisterNewTicker() error {
-	err := db.QueryRow(`insert into tickers (symbol, name, exchange_id) values($1, $2, $3) returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id).Scan(&tickers.Id)
+	err := db.QueryRow(`insert into tickers (symbol, name, exchange_id, archived) values($1, $2, $3, $4) returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Archived).Scan(&tickers.Id)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (tickers *Tickers) updateTicker() error {
+	err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, archived = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Archived, tickers.Id).Scan(&tickers.Id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tickerAudit *TickerAudit) RegisterNewAudit() error {
+	err := db.QueryRow(`insert into ticker_audit (audit_timestamp, ticker_list_update_timestamp, added_count, change_count) values($1, $2, $3, $4) returning id`, tickerAudit.AuditTimestamp, tickerAudit.TickerListUpdateTimestamp, tickerAudit.AddedCount, tickerAudit.ChangeCount).Scan(&tickerAudit.Id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tickerUpdate *TickerUpdate) RegisterNewTickerUpdate() error {
+	err := db.QueryRow(`insert into ticker_updates (ticker_audit_id, update_timestamp, update_type, ticker_id) values($1, $2, $3, $4) returning id`, tickerUpdate.TickerAudit.Id, tickerUpdate.UpdateTimestamp, tickerUpdate.UpdateType, tickerUpdate.Ticker.Id).Scan(&tickerUpdate.Id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getTickers() []Tickers {
+	fmt.Println("Getting Stock Tickers")
+	statement := fmt.Sprintf("SELECT tickers.id, tickers.symbol, tickers.name, exchange.id, exchange.name, tickers.archived from tickers, exchange where tickers.exchange_id = exchange.id")
+	//TODO: Error Checking
+	tickers, _, _ := postgresql_access.QueryDatabase(db, statement)
+	ticker_list := []Tickers{}
+
+	for _, ticker := range tickers {
+		single_ticker := Tickers{}
+		single_ticker.Id, _ = strconv.Atoi(ticker[0].(string))
+		single_ticker.Symbol = ticker[1].(string)
+		single_ticker.Name = ticker[2].(string)
+		single_ticker.Exchange.Id, _ = strconv.Atoi(ticker[3].(string))
+		single_ticker.Exchange.Name = ticker[4].(string)
+		single_ticker.Archived = ticker[5].(string)
+		ticker_list = append(ticker_list, single_ticker)
+	}
+	fmt.Println("Returning Stock Tickers")
+	return ticker_list
 }

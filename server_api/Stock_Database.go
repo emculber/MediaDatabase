@@ -13,7 +13,7 @@ var stockDatabaseSchema = []string{
 	"CREATE TABLE tickers(id SERIAL PRIMARY KEY, symbol VARCHAR(10), name VARCHAR(256), exchange_id INTEGER REFERENCES exchange(id), archived VARCHAR(1))",
 	"CREATE TABLE ticker_audit(id SERIAL PRIMARY KEY, audit_timestamp INTEGER, ticker_list_update_timestamp BIGINT, added_count INTEGER, change_count INTEGER)",
 	"CREATE TABLE ticker_updates(id SERIAL PRIMARY KEY, ticker_audit_id INTEGER REFERENCES ticker_audit(id), update_timestamp INTEGER, update_type VARCHAR(60), ticker_id INTEGER REFERENCES tickers(id))",
-	"CREATE TABLE ticker_prices (id SERIAL PRIMARY KEY, ticker_id INTEGER REFERENCES tickers(id), stock_timestamp INTEGER, close REAL, high REAL, low REAL, open REAL, volume INTEGER)",
+	"CREATE TABLE ticker_prices (id SERIAL PRIMARY KEY, ticker_id INTEGER REFERENCES tickers(id), stock_timestamp INTEGER, close REAL, high REAL, low REAL, open REAL, volume INTEGER, UNIQUE(ticker_id, stock_timestamp))",
 }
 
 var stockDropDatabaseSchema = []string{

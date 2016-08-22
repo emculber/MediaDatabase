@@ -211,7 +211,7 @@ func createPrices(w http.ResponseWriter, r *http.Request) {
 		if i == 0 {
 			log.WithFields(log.Fields{
 				"Ticker": prices[0].Ticker,
-			}).Error("Registering New Price With Ticker")
+			}).Info("Registering New Prices With Ticker")
 		}
 		if err := price.RegisterNewPrice(); err != nil {
 			log.WithFields(log.Fields{

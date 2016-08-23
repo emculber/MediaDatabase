@@ -6,13 +6,12 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/emculber/database_access/postgresql"
+	"github.com/lib/pq"
 )
 
 var stockDatabaseSchema = []string{
 	"CREATE TABLE exchange(id SERIAL PRIMARY KEY, name VARCHAR(60))",
-	"CREATE TABLE tickers(id SERIAL PRIMARY KEY, symbol VARCHAR(10), name VARCHAR(256), exchange_id INTEGER REFERENCES exchange(id), archived VARCHAR(1))",
-	"CREATE TABLE ticker_audit(id SERIAL PRIMARY KEY, audit_timestamp INTEGER, ticker_list_update_timestamp BIGINT, added_count INTEGER, change_count INTEGER)",
-	"CREATE TABLE ticker_updates(id SERIAL PRIMARY KEY, ticker_audit_id INTEGER REFERENCES ticker_audit(id), update_timestamp INTEGER, update_type VARCHAR(60), ticker_id INTEGER REFERENCES tickers(id))",
+	"CREATE TABLE tickers(id SERIAL PRIMARY KEY, symbol VARCHAR(10), name VARCHAR(256), exchange_id INTEGER REFERENCES exchange(id), added_timestamp BIGINT, updated_timestamp BIGINT, UNIQUE (symbol, name, exchange_id))",
 	"CREATE TABLE ticker_prices (id SERIAL PRIMARY KEY, ticker_id INTEGER REFERENCES tickers(id), stock_timestamp INTEGER, close REAL, high REAL, low REAL, open REAL, volume INTEGER, UNIQUE(ticker_id, stock_timestamp))",
 }
 
@@ -71,15 +70,25 @@ func (prices *Prices) RegisterNewPrice() error {
 }
 
 func (tickers *Tickers) RegisterNewTicker() error {
-	err := db.QueryRow(`insert into tickers (symbol, name, exchange_id, archived) values($1, $2, $3, $4) returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Archived).Scan(&tickers.Id)
-	if err != nil {
-		return err
+	err := db.QueryRow(`insert into tickers (symbol, name, exchange_id, added_timestamp, updated_timestamp) values($1, $2, $3, $4, $5) returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Timestamp).Scan(&tickers.Id)
+	if err, ok := err.(*pq.Error); ok {
+		if err.Code == "23505" {
+			err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, updated_timestamp = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id).Scan(&tickers.Id)
+			fmt.Println("Update")
+			return nil
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
+	fmt.Println("Insert")
 	return nil
 }
 
 func (tickers *Tickers) updateTicker() error {
-	err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, archived = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Archived, tickers.Id).Scan(&tickers.Id)
+	err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, archived = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id).Scan(&tickers.Id)
 	if err != nil {
 		return err
 	}
@@ -116,7 +125,7 @@ func getTickers() []Tickers {
 		single_ticker.Name = ticker[2].(string)
 		single_ticker.Exchange.Id, _ = strconv.Atoi(ticker[3].(string))
 		single_ticker.Exchange.Name = ticker[4].(string)
-		single_ticker.Archived = ticker[5].(string)
+		//single_ticker.Timestamp = ticker[5].(string)
 		ticker_list = append(ticker_list, single_ticker)
 	}
 	fmt.Println("Returning Stock Tickers")

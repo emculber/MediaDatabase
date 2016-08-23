@@ -7,11 +7,6 @@ type Exchange struct {
 	Name string
 }
 
-type TickerList struct {
-	Timestamp int
-	Tickers   []Tickers
-}
-
 type TickerAudit struct {
 	Id                        int
 	AuditTimestamp            int64
@@ -29,11 +24,11 @@ type TickerUpdate struct {
 }
 
 type Tickers struct {
-	Id       int
-	Symbol   string
-	Name     string
-	Exchange Exchange
-	Archived string
+	Id        int
+	Symbol    string
+	Name      string
+	Exchange  Exchange
+	Timestamp int
 }
 
 type Prices struct {

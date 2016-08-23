@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -55,135 +53,137 @@ func createExchanges(w http.ResponseWriter, r *http.Request) {
 func createTicker(w http.ResponseWriter, r *http.Request) {
 	ticker := Tickers{}
 
-	r.ParseForm()
-	ticker.Symbol = r.PostFormValue("symbol")
-	ticker.Name = r.PostFormValue("name")
-	ticker.Exchange.Id, _ = strconv.Atoi(r.PostFormValue("exchange_id"))
+	err := json.NewDecoder(r.Body).Decode(&ticker)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
 
+	fmt.Println(ticker)
 	if err := ticker.RegisterNewTicker(); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Error Registering New Ticker")
 		return
 	}
-	w.Write([]byte("OK"))
 }
 
 func sendTickers(w http.ResponseWriter, r *http.Request) {
-	tickerList := TickerList{}
+	/*
+		tickerList := TickerList{}
 
-	if r.Body == nil {
-		http.Error(w, "Please send a request body", 400)
-		return
-	}
-	err := json.NewDecoder(r.Body).Decode(&tickerList)
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
-	}
+		if r.Body == nil {
+			http.Error(w, "Please send a request body", 400)
+			return
+		}
+		err := json.NewDecoder(r.Body).Decode(&tickerList)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
 
-	tickers := tickerList.Tickers
+		tickers := tickerList.Tickers
 
-	currentTickers := getTickers()
+		currentTickers := getTickers()
 
-	currentTickersLength := len(currentTickers)
-	newTickersLength := len(tickers)
+		currentTickersLength := len(currentTickers)
+		newTickersLength := len(tickers)
 
-	for currentIndex := 0; currentIndex < currentTickersLength; currentIndex++ {
-		for newIndex := 0; newIndex < newTickersLength; newIndex++ {
-			if currentTickers[currentIndex].Symbol == tickers[newIndex].Symbol &&
-				currentTickers[currentIndex].Name == tickers[newIndex].Name &&
-				currentTickers[currentIndex].Exchange.Id == tickers[newIndex].Exchange.Id {
+		for currentIndex := 0; currentIndex < currentTickersLength; currentIndex++ {
+			for newIndex := 0; newIndex < newTickersLength; newIndex++ {
+				if currentTickers[currentIndex].Symbol == tickers[newIndex].Symbol &&
+					currentTickers[currentIndex].Name == tickers[newIndex].Name &&
+					currentTickers[currentIndex].Exchange.Id == tickers[newIndex].Exchange.Id {
 
-				currentTickers = append(currentTickers[:currentIndex], currentTickers[currentIndex+1:]...)
-				currentTickersLength--
-				currentIndex--
+					currentTickers = append(currentTickers[:currentIndex], currentTickers[currentIndex+1:]...)
+					currentTickersLength--
+					currentIndex--
 
-				tickers = append(tickers[:newIndex], tickers[newIndex+1:]...)
-				newTickersLength--
-				newIndex--
+					tickers = append(tickers[:newIndex], tickers[newIndex+1:]...)
+					newTickersLength--
+					newIndex--
 
-				/*
-					fmt.Println("Update Current Ticker Length ->", currentTickersLength)
-					fmt.Println("Update Current Index ->", currentIndex)
-					fmt.Println("Update New Ticker Length ->", newTickersLength)
-					fmt.Println("Update New Index ->", newIndex)
-				*/
-				break
+					/*
+						fmt.Println("Update Current Ticker Length ->", currentTickersLength)
+						fmt.Println("Update Current Index ->", currentIndex)
+						fmt.Println("Update New Ticker Length ->", newTickersLength)
+						fmt.Println("Update New Index ->", newIndex)
+					break
+				}
+
+			}
+		}
+
+		fmt.Println("Update Current Ticker Length ->", currentTickersLength)
+		fmt.Println("Update New Ticker Length ->", newTickersLength)
+
+		//TODO: Impliment reverse archive
+
+		tickerAudit := TickerAudit{
+			AuditTimestamp:            time.Now().Unix(),
+			TickerListUpdateTimestamp: tickerList.Timestamp,
+			AddedCount:                newTickersLength,
+			ChangeCount:               currentTickersLength,
+		}
+		if err := tickerAudit.RegisterNewAudit(); err != nil {
+			log.WithFields(log.Fields{
+				"Ticker Audit": tickerAudit,
+				"Error":        err,
+			}).Error("Error Registering New Ticker Audit")
+			return
+		}
+
+		for _, changeTicker := range currentTickers {
+			changeTicker.Archived = "Y"
+
+			if err := changeTicker.RegisterNewTicker(); err != nil {
+				log.WithFields(log.Fields{
+					"Ticker": changeTicker,
+					"Error":  err,
+				}).Error("Error Registering Change Ticker")
+			}
+			tickerUpdate := TickerUpdate{
+				TickerAudit:     tickerAudit,
+				UpdateTimestamp: time.Now().Unix(),
+				UpdateType:      "Archived",
+				Ticker:          changeTicker,
 			}
 
+			if err := tickerUpdate.RegisterNewTickerUpdate(); err != nil {
+				log.WithFields(log.Fields{
+					"Ticker Update": tickerUpdate,
+					"Error":         err,
+				}).Error("Error Registering New Ticker Update")
+			}
 		}
-	}
+		for _, newTicker := range tickers {
 
-	fmt.Println("Update Current Ticker Length ->", currentTickersLength)
-	fmt.Println("Update New Ticker Length ->", newTickersLength)
+			newTicker.Archived = "N"
 
-	//TODO: Impliment reverse archive
+			if err := newTicker.RegisterNewTicker(); err != nil {
+				log.WithFields(log.Fields{
+					"Ticker": newTicker,
+					"Error":  err,
+				}).Error("Error Registering New Ticker")
+			}
 
-	tickerAudit := TickerAudit{
-		AuditTimestamp:            time.Now().Unix(),
-		TickerListUpdateTimestamp: tickerList.Timestamp,
-		AddedCount:                newTickersLength,
-		ChangeCount:               currentTickersLength,
-	}
-	if err := tickerAudit.RegisterNewAudit(); err != nil {
-		log.WithFields(log.Fields{
-			"Ticker Audit": tickerAudit,
-			"Error":        err,
-		}).Error("Error Registering New Ticker Audit")
-		return
-	}
+			tickerUpdate := TickerUpdate{
+				TickerAudit:     tickerAudit,
+				UpdateTimestamp: time.Now().Unix(),
+				UpdateType:      "Add",
+				Ticker:          newTicker,
+			}
 
-	for _, changeTicker := range currentTickers {
-		changeTicker.Archived = "Y"
-
-		if err := changeTicker.RegisterNewTicker(); err != nil {
-			log.WithFields(log.Fields{
-				"Ticker": changeTicker,
-				"Error":  err,
-			}).Error("Error Registering Change Ticker")
-		}
-		tickerUpdate := TickerUpdate{
-			TickerAudit:     tickerAudit,
-			UpdateTimestamp: time.Now().Unix(),
-			UpdateType:      "Archived",
-			Ticker:          changeTicker,
+			if err := tickerUpdate.RegisterNewTickerUpdate(); err != nil {
+				log.WithFields(log.Fields{
+					"Ticker Update": tickerUpdate,
+					"Error":         err,
+				}).Error("Error Registering New Ticker Update")
+			}
 		}
 
-		if err := tickerUpdate.RegisterNewTickerUpdate(); err != nil {
-			log.WithFields(log.Fields{
-				"Ticker Update": tickerUpdate,
-				"Error":         err,
-			}).Error("Error Registering New Ticker Update")
-		}
-	}
-	for _, newTicker := range tickers {
-
-		newTicker.Archived = "N"
-
-		if err := newTicker.RegisterNewTicker(); err != nil {
-			log.WithFields(log.Fields{
-				"Ticker": newTicker,
-				"Error":  err,
-			}).Error("Error Registering New Ticker")
-		}
-
-		tickerUpdate := TickerUpdate{
-			TickerAudit:     tickerAudit,
-			UpdateTimestamp: time.Now().Unix(),
-			UpdateType:      "Add",
-			Ticker:          newTicker,
-		}
-
-		if err := tickerUpdate.RegisterNewTickerUpdate(); err != nil {
-			log.WithFields(log.Fields{
-				"Ticker Update": tickerUpdate,
-				"Error":         err,
-			}).Error("Error Registering New Ticker Update")
-		}
-	}
-
-	w.Write([]byte("OK"))
+		w.Write([]byte("OK"))
+	*/
 }
 
 func getAllTickers(w http.ResponseWriter, r *http.Request) {

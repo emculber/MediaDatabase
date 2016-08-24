@@ -205,6 +205,7 @@ func createPrices(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&prices)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
+		fmt.Println(err)
 		return
 	}
 	for i, price := range prices {

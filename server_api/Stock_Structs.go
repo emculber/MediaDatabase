@@ -24,11 +24,12 @@ type TickerUpdate struct {
 }
 
 type Tickers struct {
-	Id        int
-	Symbol    string
-	Name      string
-	Exchange  Exchange
-	Timestamp int
+	Id             int
+	Symbol         string
+	Name           string
+	Exchange       Exchange
+	AddedTimestamp int
+	Timestamp      int
 }
 
 type Prices struct {

@@ -113,7 +113,7 @@ func (tickerUpdate *TickerUpdate) RegisterNewTickerUpdate() error {
 
 func getTickers() []Tickers {
 	fmt.Println("Getting Stock Tickers")
-	statement := fmt.Sprintf("SELECT tickers.id, tickers.symbol, tickers.name, exchange.id, exchange.name, tickers.archived from tickers, exchange where tickers.exchange_id = exchange.id")
+	statement := fmt.Sprintf("SELECT tickers.id, tickers.symbol, tickers.name, exchange.id, exchange.name, tickers.added_timestamp, updated_timestamp from tickers, exchange where tickers.exchange_id = exchange.id")
 	//TODO: Error Checking
 	tickers, _, _ := postgresql_access.QueryDatabase(db, statement)
 	ticker_list := []Tickers{}
@@ -125,9 +125,10 @@ func getTickers() []Tickers {
 		single_ticker.Name = ticker[2].(string)
 		single_ticker.Exchange.Id, _ = strconv.Atoi(ticker[3].(string))
 		single_ticker.Exchange.Name = ticker[4].(string)
-		//single_ticker.Timestamp = ticker[5].(string)
+		single_ticker.AddedTimestamp, _ = strconv.Atoi(ticker[5].(string))
+		single_ticker.Timestamp, _ = strconv.Atoi(ticker[6].(string))
 		ticker_list = append(ticker_list, single_ticker)
 	}
-	fmt.Println("Returning Stock Tickers")
+	fmt.Println("Returning Stock Tickers ->", len(ticker_list))
 	return ticker_list
 }

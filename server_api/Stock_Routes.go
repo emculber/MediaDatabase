@@ -61,4 +61,10 @@ var stockRoutes = StockRoutes{
 		"/api/stock/createprices",
 		createPrices,
 	},
+	StockRoute{
+		"Get All Prices for Ticker",
+		"POST",
+		"/api/stock/gettickerprices",
+		getTickerPrices,
+	},
 }

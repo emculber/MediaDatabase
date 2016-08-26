@@ -225,3 +225,20 @@ func createPrices(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte("OK"))
 }
+
+func getTickerPrices(w http.ResponseWriter, r *http.Request) {
+	ticker := Tickers{}
+	err := json.NewDecoder(r.Body).Decode(&ticker)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Ticker ->", ticker)
+	if err := json.NewEncoder(w).Encode(ticker.getTickerPrices()); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Encoding Wallet")
+		return
+	}
+}

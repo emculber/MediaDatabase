@@ -7,22 +7,6 @@ type Exchange struct {
 	Name string
 }
 
-type TickerAudit struct {
-	Id                        int
-	AuditTimestamp            int64
-	TickerListUpdateTimestamp int
-	AddedCount                int
-	ChangeCount               int
-}
-
-type TickerUpdate struct {
-	Id              int
-	TickerAudit     TickerAudit
-	UpdateTimestamp int64
-	UpdateType      string
-	Ticker          Tickers
-}
-
 type Tickers struct {
 	Id             int
 	Symbol         string

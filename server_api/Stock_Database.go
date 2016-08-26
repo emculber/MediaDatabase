@@ -69,6 +69,38 @@ func (prices *Prices) RegisterNewPrice() error {
 	return nil
 }
 
+func (tickers *Tickers) getTickerPrices() []Prices {
+	fmt.Println("Getting Stock Prices")
+	statement := fmt.Sprintf("SELECT ticker_prices.id, ticker_prices.stock_timestamp, ticker_prices.close, ticker_prices.high, ticker_prices.low, ticker_prices.open, ticker_prices.volume, tickers.id, tickers.symbol, tickers.name, tickers.added_timestamp, tickers.updated_timestamp, exchange.id, exchange.name FROM ticker_prices, tickers, exchange WHERE ticker_prices.ticker_id = tickers.id AND tickers.exchange_id = exchange.id AND tickers.id = %d", tickers.Id)
+	//TODO: Error Checking
+	prices, _, _ := postgresql_access.QueryDatabase(db, statement)
+	price_list := []Prices{}
+
+	for _, price := range prices {
+		single_price := Prices{}
+		single_price.Id, _ = strconv.Atoi(price[0].(string))
+		single_price.Timestamp, _ = strconv.Atoi(price[1].(string))
+		single_price.Close, _ = strconv.ParseFloat(price[2].(string), 64)
+		single_price.High, _ = strconv.ParseFloat(price[3].(string), 64)
+		single_price.Low, _ = strconv.ParseFloat(price[4].(string), 64)
+		single_price.Open, _ = strconv.ParseFloat(price[5].(string), 64)
+		single_price.Volume, _ = strconv.Atoi(price[6].(string))
+
+		single_price.Ticker.Id, _ = strconv.Atoi(price[7].(string))
+		single_price.Ticker.Symbol = price[8].(string)
+		single_price.Ticker.Name = price[9].(string)
+		single_price.Ticker.AddedTimestamp, _ = strconv.Atoi(price[10].(string))
+		single_price.Ticker.Timestamp, _ = strconv.Atoi(price[11].(string))
+
+		single_price.Ticker.Exchange.Id, _ = strconv.Atoi(price[12].(string))
+		single_price.Ticker.Exchange.Name = price[13].(string)
+
+		price_list = append(price_list, single_price)
+	}
+	fmt.Println("Returning Stock prices ->", len(price_list))
+	return price_list
+}
+
 func (tickers *Tickers) RegisterNewTicker() error {
 	err := db.QueryRow(`insert into tickers (symbol, name, exchange_id, added_timestamp, updated_timestamp) values($1, $2, $3, $4, $5) returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Timestamp).Scan(&tickers.Id)
 	if err, ok := err.(*pq.Error); ok {
@@ -89,22 +121,6 @@ func (tickers *Tickers) RegisterNewTicker() error {
 
 func (tickers *Tickers) updateTicker() error {
 	err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, archived = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id).Scan(&tickers.Id)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (tickerAudit *TickerAudit) RegisterNewAudit() error {
-	err := db.QueryRow(`insert into ticker_audit (audit_timestamp, ticker_list_update_timestamp, added_count, change_count) values($1, $2, $3, $4) returning id`, tickerAudit.AuditTimestamp, tickerAudit.TickerListUpdateTimestamp, tickerAudit.AddedCount, tickerAudit.ChangeCount).Scan(&tickerAudit.Id)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (tickerUpdate *TickerUpdate) RegisterNewTickerUpdate() error {
-	err := db.QueryRow(`insert into ticker_updates (ticker_audit_id, update_timestamp, update_type, ticker_id) values($1, $2, $3, $4) returning id`, tickerUpdate.TickerAudit.Id, tickerUpdate.UpdateTimestamp, tickerUpdate.UpdateType, tickerUpdate.Ticker.Id).Scan(&tickerUpdate.Id)
 	if err != nil {
 		return err
 	}

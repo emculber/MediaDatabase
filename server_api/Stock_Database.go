@@ -172,7 +172,11 @@ func (ticker *Tickers) retriveDayTimestamp() (int, error) {
 	upperDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 59, 0, 0, currentDate.Location())
 
 	var amountTimestamp int
-	err := db.QueryRow(`SELECT count(id) FROM ticker_prices WHERE ticker_id=$1 AND stock_timestamp > $2 AND ticker_prices.stock_timestamp < $3`, ticker.Id, lowerDate, upperDate).Scan(&amountTimestamp)
+	err := db.QueryRow(`SELECT count(id) FROM ticker_prices WHERE ticker_id=$1 AND stock_timestamp > $2 AND ticker_prices.stock_timestamp < $3`, ticker.Id, lowerDate.Unix(), upperDate.Unix()).Scan(&amountTimestamp)
+
+	sql := fmt.Sprintf("SELECT count(id) FROM ticker_prices WHERE ticker_id=%d AND stock_timestamp > %d AND ticker_prices.stock_timestamp < %d", ticker.Id, lowerDate.Unix(), upperDate.Unix())
+	fmt.Println("Running SQL ->", sql, "Amount ->", amountTimestamp)
+
 	if err != nil {
 		return 0, err
 	}

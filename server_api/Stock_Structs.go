@@ -2,6 +2,10 @@ package main
 
 import "errors"
 
+type MaxTimestamp struct {
+	Max int
+}
+
 type Exchange struct {
 	Id   int
 	Name string

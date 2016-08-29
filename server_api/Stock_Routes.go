@@ -67,4 +67,16 @@ var stockRoutes = StockRoutes{
 		"/api/stock/gettickerprices",
 		getTickerPrices,
 	},
+	StockRoute{
+		"Get Max Timestamp",
+		"GET",
+		"/api/stock/getmaxtimestamp",
+		getMaxTimestamp,
+	},
+	StockRoute{
+		"Get Max Timestamp",
+		"POST",
+		"/api/stock/gettimestampdaycount",
+		getTimestampDayCount,
+	},
 }

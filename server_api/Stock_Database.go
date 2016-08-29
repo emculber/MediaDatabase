@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/emculber/database_access/postgresql"
@@ -63,8 +64,12 @@ func (exchange *Exchange) RegisterNewExchange() error {
 
 func (prices *Prices) RegisterNewPrice() error {
 	err := db.QueryRow(`insert into ticker_prices (ticker_id, stock_timestamp, close, high, low, open, volume) values($1, $2, $3, $4, $5, $6, $7) returning id`, prices.Ticker.Id, prices.Timestamp, prices.Close, prices.High, prices.Low, prices.Open, prices.Volume).Scan(&prices.Id)
-	if err != nil {
-		return err
+	if err, ok := err.(*pq.Error); ok {
+		if err.Code == "23505" {
+			return nil
+		} else {
+			return err
+		}
 	}
 	return nil
 }
@@ -147,4 +152,29 @@ func getTickers() []Tickers {
 	}
 	fmt.Println("Returning Stock Tickers ->", len(ticker_list))
 	return ticker_list
+}
+
+func retriveMaxTimestamp() (int, error) {
+	fmt.Println("Getting Max Timestamp")
+	var maxTimestamp int
+	err := db.QueryRow(`SELECT max(stock_timestamp) from ticker_prices`).Scan(&maxTimestamp)
+	if err != nil {
+		return 0, err
+	}
+	return maxTimestamp, nil
+}
+
+func (ticker *Tickers) retriveDayTimestamp() (int, error) {
+	fmt.Println("Getting Max Timestamp")
+
+	currentDate := time.Unix(int64(ticker.Timestamp), 0)
+	lowerDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, currentDate.Location())
+	upperDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 59, 0, 0, currentDate.Location())
+
+	var amountTimestamp int
+	err := db.QueryRow(`SELECT count(id) FROM ticker_prices WHERE ticker_id=$1 AND stock_timestamp > $2 AND ticker_prices.stock_timestamp < $3`, ticker.Id, lowerDate, upperDate).Scan(&amountTimestamp)
+	if err != nil {
+		return 0, err
+	}
+	return amountTimestamp, nil
 }

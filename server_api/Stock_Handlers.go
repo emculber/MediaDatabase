@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/emculber/database_access/postgresql"
 )
 
 func createExchanges(w http.ResponseWriter, r *http.Request) {
@@ -21,8 +22,7 @@ func createExchanges(w http.ResponseWriter, r *http.Request) {
 	exchange.Name = "NYSE MKT"
 	if err := exchange.RegisterNewExchange(); err != nil {
 		log.WithFields(log.Fields{
-			"Error": err,
-		}).Error("Error Registering New Exchange")
+			"Error": err}).Error("Error Registering New Exchange")
 		return
 	}
 	exchange.Name = "New York Stock Exchange"
@@ -208,18 +208,48 @@ func createPrices(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-	for i, price := range prices {
-		if i == 0 {
-			log.WithFields(log.Fields{
-				"Ticker": prices[0].Ticker,
-			}).Info("Registering New Prices With Ticker")
-		}
-		if err := price.RegisterNewPrice(); err != nil {
-			log.WithFields(log.Fields{
-				"Price": price,
-				"Index": i,
-				"Error": err,
-			}).Error("Error Registering New Price")
+	columns := []string{"ticker_id", "stock_timestamp", "close", "high", "low", "open", "volume"}
+
+	var data [][]interface{}
+	for _, price := range prices {
+		inter := make([]interface{}, 7)
+		inter[0] = price.Ticker.Id
+		inter[1] = price.Timestamp
+		inter[2] = price.Close
+		inter[3] = price.High
+		inter[4] = price.Low
+		inter[5] = price.Open
+		inter[6] = price.Volume
+		data = append(data, inter)
+	}
+
+	if len(prices) != 0 {
+		log.WithFields(log.Fields{
+			"Converted": len(data),
+			"Prices":    len(prices),
+			"Ticker":    prices[0].Ticker,
+		}).Info("Converted Prices")
+	}
+
+	if len(data) != len(prices) {
+		fmt.Println("Converted and Prices length does not match!!!")
+	}
+
+	if err := postgresql_access.InsertMultiDataValues(db, "ticker_prices", columns, data); err != nil {
+		fmt.Println("Error -> Falling back to individual insert")
+		for i, price := range prices {
+			if i == 0 {
+				log.WithFields(log.Fields{
+					"Ticker": prices[0].Ticker,
+				}).Info("Registering New Prices With Ticker")
+			}
+			if err := price.RegisterNewPrice(); err != nil {
+				log.WithFields(log.Fields{
+					"Price": price,
+					"Index": i,
+					"Error": err,
+				}).Error("Error Registering New Price")
+			}
 		}
 	}
 
@@ -236,6 +266,39 @@ func getTickerPrices(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("Ticker ->", ticker)
 	if err := json.NewEncoder(w).Encode(ticker.getTickerPrices()); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Encoding Wallet")
+		return
+	}
+}
+
+func getMaxTimestamp(w http.ResponseWriter, r *http.Request) {
+	//maxTimestamp := MaxTimestamp{}
+	//maxTimestamp.Max, _ = retriveMaxTimestamp()
+	max, _ := retriveMaxTimestamp()
+	//fmt.Println(maxTimestamp)
+	if err := json.NewEncoder(w).Encode(max); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Encoding Wallet")
+		return
+	}
+}
+
+func getTimestampDayCount(w http.ResponseWriter, r *http.Request) {
+	ticker := Tickers{}
+	err := json.NewDecoder(r.Body).Decode(&ticker)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Ticker ->", ticker)
+	count, _ := ticker.retriveDayTimestamp()
+	fmt.Println("Current Count of Day Timestamps ->", count)
+
+	if err := json.NewEncoder(w).Encode(count); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Error Encoding Wallet")

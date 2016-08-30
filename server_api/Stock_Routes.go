@@ -74,6 +74,12 @@ var stockRoutes = StockRoutes{
 		getMaxTimestamp,
 	},
 	StockRoute{
+		"Get Min Timestamp",
+		"GET",
+		"/api/stock/getmintimestamp",
+		getMinTimestamp,
+	},
+	StockRoute{
 		"Get Max Timestamp",
 		"POST",
 		"/api/stock/gettimestampdaycount",

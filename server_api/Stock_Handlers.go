@@ -286,6 +286,19 @@ func getMaxTimestamp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getMinTimestamp(w http.ResponseWriter, r *http.Request) {
+	//maxTimestamp := MaxTimestamp{}
+	//maxTimestamp.Max, _ = retriveMaxTimestamp()
+	min, _ := retriveMinTimestamp()
+	//fmt.Println(max)
+	if err := json.NewEncoder(w).Encode(min); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Encoding Wallet")
+		return
+	}
+}
+
 func getTimestampDayCount(w http.ResponseWriter, r *http.Request) {
 	ticker := Tickers{}
 	err := json.NewDecoder(r.Body).Decode(&ticker)

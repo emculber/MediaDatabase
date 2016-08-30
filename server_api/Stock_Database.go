@@ -14,6 +14,7 @@ var stockDatabaseSchema = []string{
 	"CREATE TABLE exchange(id SERIAL PRIMARY KEY, name VARCHAR(60))",
 	"CREATE TABLE tickers(id SERIAL PRIMARY KEY, symbol VARCHAR(10), name VARCHAR(256), exchange_id INTEGER REFERENCES exchange(id), added_timestamp BIGINT, updated_timestamp BIGINT, UNIQUE (symbol, name, exchange_id))",
 	"CREATE TABLE ticker_prices (id SERIAL PRIMARY KEY, ticker_id INTEGER REFERENCES tickers(id), stock_timestamp INTEGER, close REAL, high REAL, low REAL, open REAL, volume INTEGER, UNIQUE(ticker_id, stock_timestamp))",
+	"CREATE TABLE simple_moving_average (id SERIAL PRIMARY KEY, ticker_id INTEGER REFERENCES tickers(id), sma_timestamp INTEGER, sma REAL, period INTEGER, UNIQUE(ticker_id, sma_timestamp))",
 }
 
 var stockDropDatabaseSchema = []string{
@@ -164,6 +165,16 @@ func retriveMaxTimestamp() (int, error) {
 	return maxTimestamp, nil
 }
 
+func retriveMinTimestamp() (int, error) {
+	fmt.Println("Getting Min Timestamp")
+	var minTimestamp int
+	err := db.QueryRow(`SELECT min(stock_timestamp) from ticker_prices`).Scan(&minTimestamp)
+	if err != nil {
+		return 0, err
+	}
+	return minTimestamp, nil
+}
+
 func (ticker *Tickers) retriveDayTimestampCount() (int, error) {
 	fmt.Println("Getting Max Timestamp")
 
@@ -215,4 +226,20 @@ func (ticker *Tickers) retriveDayTimestamp() []Prices {
 	}
 	fmt.Println("Returning Stock prices ->", len(price_list))
 	return price_list
+}
+
+func (ticker *Tickers) retriveSMADayTimestampCount() (int, error) {
+	fmt.Println("Getting SMA Timestamp Count")
+
+	currentDate := time.Unix(int64(ticker.Timestamp), 0)
+	lowerDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, currentDate.Location())
+	upperDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 59, 0, 0, currentDate.Location())
+
+	var amountTimestamp int
+	err := db.QueryRow(`SELECT count(id) FROM ticker_prices WHERE ticker_id=$1 AND stock_timestamp > $2 AND ticker_prices.stock_timestamp < $3`, ticker.Id, lowerDate.Unix(), upperDate.Unix()).Scan(&amountTimestamp)
+
+	if err != nil {
+		return 0, err
+	}
+	return amountTimestamp, nil
 }

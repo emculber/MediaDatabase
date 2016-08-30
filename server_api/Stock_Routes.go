@@ -79,4 +79,10 @@ var stockRoutes = StockRoutes{
 		"/api/stock/gettimestampdaycount",
 		getTimestampDayCount,
 	},
+	StockRoute{
+		"Get price Timestamps",
+		"POST",
+		"/api/stock/gettimestampsday",
+		getTimestampsDay,
+	},
 }

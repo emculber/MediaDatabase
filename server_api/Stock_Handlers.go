@@ -277,7 +277,7 @@ func getMaxTimestamp(w http.ResponseWriter, r *http.Request) {
 	//maxTimestamp := MaxTimestamp{}
 	//maxTimestamp.Max, _ = retriveMaxTimestamp()
 	max, _ := retriveMaxTimestamp()
-	//fmt.Println(maxTimestamp)
+	//fmt.Println(max)
 	if err := json.NewEncoder(w).Encode(max); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
@@ -295,10 +295,29 @@ func getTimestampDayCount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("Ticker ->", ticker)
-	count, _ := ticker.retriveDayTimestamp()
+	count, _ := ticker.retriveDayTimestampCount()
 	fmt.Println("Current Count of Day Timestamps ->", count)
 
 	if err := json.NewEncoder(w).Encode(count); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Encoding Wallet")
+		return
+	}
+}
+
+func getTimestampsDay(w http.ResponseWriter, r *http.Request) {
+	ticker := Tickers{}
+	err := json.NewDecoder(r.Body).Decode(&ticker)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Ticker ->", ticker)
+	prices := ticker.retriveDayTimestamp()
+
+	if err := json.NewEncoder(w).Encode(prices); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Error Encoding Wallet")

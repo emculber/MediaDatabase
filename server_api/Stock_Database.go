@@ -156,12 +156,12 @@ func getTickers() []Tickers {
 }
 
 func retriveMaxTimestamp() (int, error) {
-	fmt.Println("Getting Max Timestamp")
 	var maxTimestamp int
 	err := db.QueryRow(`SELECT max(stock_timestamp) from ticker_prices`).Scan(&maxTimestamp)
 	if err != nil {
 		return 0, err
 	}
+	fmt.Println("Getting Max Timestamp ->", maxTimestamp)
 	return maxTimestamp, nil
 }
 

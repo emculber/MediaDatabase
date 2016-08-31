@@ -176,7 +176,7 @@ func retriveMinTimestamp() (int, error) {
 }
 
 func (ticker *Tickers) retriveDayTimestampCount() (int, error) {
-	fmt.Println("Getting Max Timestamp")
+	fmt.Println("Getting Day Timestamp count")
 
 	currentDate := time.Unix(int64(ticker.Timestamp), 0)
 	lowerDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, currentDate.Location())
@@ -192,7 +192,7 @@ func (ticker *Tickers) retriveDayTimestampCount() (int, error) {
 }
 
 func (ticker *Tickers) retriveDayTimestamp() []Prices {
-	fmt.Println("Getting Max Timestamp")
+	fmt.Println("Getting Day Timestamps")
 
 	currentDate := time.Unix(int64(ticker.Timestamp), 0)
 	lowerDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, currentDate.Location())

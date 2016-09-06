@@ -30,6 +30,7 @@ func main() {
 	muxRouter.UserRouter()
 	muxRouter.StockRouter()
 	http.ListenAndServe(":8080", muxRouter.Router)
+	db.Close()
 }
 
 func respond(w http.ResponseWriter, r *http.Request, status int, data interface{}) {

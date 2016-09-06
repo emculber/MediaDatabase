@@ -36,6 +36,8 @@ func InitDatabase() {
 	if err != nil {
 		panic(err)
 	}
+	db.SetMaxIdleConns(0)
+	db.SetMaxOpenConns(50)
 }
 
 func CreateTables() {

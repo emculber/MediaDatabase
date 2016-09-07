@@ -277,7 +277,7 @@ func getMaxTimestamp(w http.ResponseWriter, r *http.Request) {
 	//maxTimestamp := MaxTimestamp{}
 	//maxTimestamp.Max, _ = retriveMaxTimestamp()
 	max, _ := retriveMaxTimestamp()
-	//fmt.Println(max)
+	fmt.Println(max)
 	if err := json.NewEncoder(w).Encode(max); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,

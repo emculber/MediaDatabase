@@ -48,6 +48,7 @@ func createTables(w http.ResponseWriter, r *http.Request) {
 	CreateTables()
 	CreateFinanceTables()
 	CreateStockTables()
+	CreateTaskTables()
 }
 
 func dropTables(w http.ResponseWriter, r *http.Request) {
@@ -90,4 +91,5 @@ func dropTables(w http.ResponseWriter, r *http.Request) {
 	DropFinanceTables()
 	DropTables()
 	DropUserTables()
+	DropTaskTables()
 }

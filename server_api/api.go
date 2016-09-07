@@ -29,6 +29,7 @@ func main() {
 	muxRouter.AdminRouter()
 	muxRouter.UserRouter()
 	muxRouter.StockRouter()
+	muxRouter.TaskRouter()
 	http.ListenAndServe(":8080", muxRouter.Router)
 	db.Close()
 }

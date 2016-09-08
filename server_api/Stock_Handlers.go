@@ -7,6 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/emculber/database_access/postgresql"
+	"github.com/lib/pq"
 )
 
 func createExchanges(w http.ResponseWriter, r *http.Request) {
@@ -196,20 +197,25 @@ func getAllTickers(w http.ResponseWriter, r *http.Request) {
 }
 
 func createPrices(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Creating New Price Group: Connection pool ->", db.Stats())
 	prices := []Prices{}
 
+	fmt.Println("Reading the body of the request")
 	if r.Body == nil {
 		http.Error(w, "Please send a request body", 400)
 		return
 	}
+	fmt.Println("Unmarshaling the body into the prices array")
 	err := json.NewDecoder(r.Body).Decode(&prices)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("Setting up columns")
 	columns := []string{"ticker_id", "stock_timestamp", "close", "high", "low", "open", "volume"}
 
+	fmt.Println("Converting data to an interfaces")
 	var data [][]interface{}
 	for _, price := range prices {
 		inter := make([]interface{}, 7)
@@ -222,6 +228,7 @@ func createPrices(w http.ResponseWriter, r *http.Request) {
 		inter[6] = price.Volume
 		data = append(data, inter)
 	}
+	fmt.Println("Converting prices ->", len(prices))
 
 	if len(prices) != 0 {
 		log.WithFields(log.Fields{
@@ -235,23 +242,55 @@ func createPrices(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Converted and Prices length does not match!!!")
 	}
 
+	fmt.Println("Trying to insert Multiple Data Values")
+
 	if err := postgresql_access.InsertMultiDataValues(db, "ticker_prices", columns, data); err != nil {
 		fmt.Println("Error -> Falling back to individual insert")
-		for i, price := range prices {
+		for i, price := range data {
+			//fmt.Println("Inserting:", i, "/", len(prices))
 			if i == 0 {
+				fmt.Println("Started Inserting")
 				log.WithFields(log.Fields{
 					"Ticker": prices[0].Ticker,
-				}).Info("Registering New Prices With Ticker")
+				}).Info("Registering New Prices With Ticker With Fallback Method")
 			}
-			if err := price.RegisterNewPrice(); err != nil {
-				log.WithFields(log.Fields{
-					"Price": price,
-					"Index": i,
-					"Error": err,
-				}).Error("Error Registering New Price")
+			if err := postgresql_access.InsertSingleDataValue(db, "ticker_prices", columns, price); err != nil {
+				if err, ok := err.(*pq.Error); ok {
+					if err.Code != "23505" {
+
+						log.WithFields(log.Fields{
+							"Price": price,
+							"Index": i,
+							"Error": err,
+						}).Error("Error Registering New Price")
+					}
+				}
 			}
 		}
+		fmt.Println("Finished Insert")
 	}
+	/*
+		if err := postgresql_access.InsertMultiDataValues(db, "ticker_prices", columns, data); err != nil {
+			fmt.Println("Error -> Falling back to individual insert")
+			for i, price := range prices {
+				//fmt.Println("Inserting:", i, "/", len(prices))
+				if i == 0 {
+					fmt.Println("Started Inserting")
+					log.WithFields(log.Fields{
+						"Ticker": prices[0].Ticker,
+					}).Info("Registering New Prices With Ticker With Fallback Method")
+				}
+				if err := price.RegisterNewPrice(); err != nil {
+					log.WithFields(log.Fields{
+						"Price": price,
+						"Index": i,
+						"Error": err,
+					}).Error("Error Registering New Price")
+				}
+			}
+			fmt.Println("Finished Insert")
+		}
+	*/
 
 	w.Write([]byte("OK"))
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/emculber/database_access/postgresql"

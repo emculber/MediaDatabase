@@ -10,6 +10,11 @@ import (
 
 func newTask(w http.ResponseWriter, r *http.Request) {
 	task := Task{}
+	fmt.Println(r.Body)
+	//buf := new(bytes.Buffer)
+	//buf.ReadFrom(r.Body)
+	//s := buf.String() // Does a complete copy of the bytes in the buffer.
+	//fmt.Println(s)
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
@@ -17,8 +22,8 @@ func newTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(task.RegisterNewTask())
 	fmt.Println("Task ->", task)
-	task.RegisterNewTask()
 
 	w.Write([]byte("Task Was Created"))
 }

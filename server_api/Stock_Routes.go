@@ -91,4 +91,10 @@ var stockRoutes = StockRoutes{
 		"/api/stock/gettimestampsday",
 		getTimestampsDay,
 	},
+	StockRoute{
+		"Get Simple Moving Average Day Timestamp Count",
+		"POST",
+		"/api/stock/retrivesimplemovingaveragetimestampdaycount",
+		retriveSimpleMovingAverageTimestampDayCount,
+	},
 }

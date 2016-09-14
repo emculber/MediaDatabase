@@ -358,7 +358,7 @@ func getTimestampDayCount(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getTimestampsDay(w http.ResponseWriter, r *http.Request) {
+func getDayTimestamps(w http.ResponseWriter, r *http.Request) {
 	ticker := Tickers{}
 	err := json.NewDecoder(r.Body).Decode(&ticker)
 	if err != nil {

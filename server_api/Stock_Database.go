@@ -108,17 +108,34 @@ func (tickers *Tickers) getTickerPrices() []Prices {
 }
 
 func (tickers *Tickers) RegisterNewTicker() error {
-	err := db.QueryRow(`insert into tickers (symbol, name, exchange_id, added_timestamp, updated_timestamp) values($1, $2, $3, $4, $5) returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Timestamp).Scan(&tickers.Id)
-	if err, ok := err.(*pq.Error); ok {
-		if err.Code == "23505" {
-			err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, updated_timestamp = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id).Scan(&tickers.Id)
-			fmt.Println("Update")
-			return nil
-			if err != nil {
+	//err := db.QueryRow(`insert into tickers (symbol, name, exchange_id, added_timestamp, updated_timestamp) values($1, $2, $3, $4, $5) returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Timestamp).Scan(&tickers.Id)
+	fmt.Println("Setting up columns")
+	columns := []string{"symbol", "name", "exchange_id", "added_timestamp", "updated_timestamp"}
+
+	fmt.Println("Converting data to an interfaces")
+	data := make([]interface{}, 5)
+	data[0] = tickers.Symbol
+	data[1] = tickers.Name
+	data[2] = tickers.Exchange.Id
+	data[3] = tickers.Timestamp
+	data[4] = tickers.Timestamp
+
+	fmt.Println("Trying to insert Single Data Values")
+
+	if err := postgresql_access.InsertSingleDataValue(db, "tickers", columns, data); err != nil {
+		if err, ok := err.(*pq.Error); ok {
+			fmt.Println(err)
+			if err.Code == "23505" {
+				fmt.Println("Updating Ticker ->", tickers)
+				//err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, updated_timestamp = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id).Scan(&tickers.Id)
+				fmt.Println("Update err ->", err)
+				return nil
+				if err != nil {
+					return err
+				}
+			} else {
 				return err
 			}
-		} else {
-			return err
 		}
 	}
 	fmt.Println("Insert")

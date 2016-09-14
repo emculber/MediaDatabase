@@ -88,8 +88,8 @@ var stockRoutes = StockRoutes{
 	StockRoute{
 		"Get price Timestamps",
 		"POST",
-		"/api/stock/gettimestampsday",
-		getTimestampsDay,
+		"/api/stock/getdaytimestamps",
+		getDayTimestamps,
 	},
 	StockRoute{
 		"Get Simple Moving Average Day Timestamp Count",

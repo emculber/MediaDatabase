@@ -28,6 +28,26 @@ func newTask(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Task Was Created"))
 }
 
+func getTask(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Getting Task")
+	task := Task{}
+	err := json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		fmt.Println(err)
+		return
+	}
+
+	task.getTaskWithIdFromDatabase()
+
+	if err := json.NewEncoder(w).Encode(task); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Encoding Wallet")
+		return
+	}
+}
+
 func getTasks(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(getTasksFromDatabase()); err != nil {
 		log.WithFields(log.Fields{

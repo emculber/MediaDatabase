@@ -43,4 +43,10 @@ var taskRoutes = TaskRoutes{
 		"/api/task/all",
 		getTasks,
 	},
+	TaskRoute{
+		"Get All Tasks",
+		"POST",
+		"/api/task/one",
+		getTask,
+	},
 }

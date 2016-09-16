@@ -55,6 +55,18 @@ func (task *Task) RegisterNewTask() error {
 	return nil
 }
 
+func (task *Task) getTaskWithIdFromDatabase() error {
+	fmt.Println("Getting Task with id ->", task.Id)
+	var due int64
+	err := db.QueryRow(`SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER FROM task_list WHERE id=$1`, task.Id).Scan(&task.Id, &task.Name, &task.Completed, &due)
+	task.Due = time.Unix(due, 0) //TODO: DO I NEED THIS
+	if err != nil {
+		return err
+	}
+	fmt.Println("Task Found with id ->", task)
+	return nil
+}
+
 func getTasksFromDatabase() []Task {
 	fmt.Println("Getting Tasks")
 	statement := fmt.Sprintf("SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER FROM task_list")

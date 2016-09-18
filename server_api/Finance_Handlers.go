@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -96,7 +95,9 @@ func NewFinancalUser(w http.ResponseWriter, r *http.Request) {
 	newFinancalUser.User = userKeys.User
 	newFinancalUser.generateKey()
 
-	fmt.Println(newFinancalUser)
+	log.WithFields(log.Fields{
+		"Financal User": newFinancalUser,
+	}).Info("New Financal User")
 
 	if err := newFinancalUser.RegisterNewUserKeys(); err != nil {
 		log.WithFields(log.Fields{

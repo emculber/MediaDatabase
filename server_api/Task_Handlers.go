@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -10,31 +9,35 @@ import (
 
 func newTask(w http.ResponseWriter, r *http.Request) {
 	task := Task{}
-	fmt.Println(r.Body)
 	//buf := new(bytes.Buffer)
 	//buf.ReadFrom(r.Body)
 	//s := buf.String() // Does a complete copy of the bytes in the buffer.
-	//fmt.Println(s)
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Decoding Json")
 		return
 	}
 
-	fmt.Println(task.RegisterNewTask())
-	fmt.Println("Task ->", task)
+	task.RegisterNewTask()
+	log.WithFields(log.Fields{
+		"Task": task,
+	}).Info("Regerstering New Task")
 
 	w.Write([]byte("Task Was Created"))
 }
 
 func getTask(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Getting Task")
+	log.Info("Getting Task")
 	task := Task{}
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error Decoding Json")
 		return
 	}
 

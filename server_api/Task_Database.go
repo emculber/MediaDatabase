@@ -56,36 +56,38 @@ func (task *Task) RegisterNewTask() error {
 }
 
 func (task *Task) getTaskWithIdFromDatabase() error {
-	fmt.Println("Getting Task with id ->", task.Id)
+	log.WithFields(log.Fields{
+		"ID": task.Id,
+	}).Info("Getting Task With Paramaters")
 	var due int64
 	err := db.QueryRow(`SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER FROM task_list WHERE id=$1`, task.Id).Scan(&task.Id, &task.Name, &task.Completed, &due)
 	task.Due = time.Unix(due, 0) //TODO: DO I NEED THIS
 	if err != nil {
 		return err
 	}
-	fmt.Println("Task Found with id ->", task)
+
+	log.WithFields(log.Fields{
+		"ID":   task.Id,
+		"Task": task,
+	}).Info("Task Found With Paramaters")
 	return nil
 }
 
 func getTasksFromDatabase() []Task {
-	fmt.Println("Getting Tasks")
+	task.Info("Getting Tasks")
 	statement := fmt.Sprintf("SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER FROM task_list")
 	//TODO: Error Checking
-	fmt.Println(statement)
 	tasks, _, _ := postgresql_access.QueryDatabase(db, statement)
 	task_list := []Task{}
 
 	for _, task := range tasks {
 		single_task := Task{}
-		fmt.Println("Converting Task ->", task)
 		single_task.Id, _ = strconv.Atoi(task[0].(string))
 		single_task.Name = task[1].(string)
 		single_task.Completed, _ = strconv.ParseBool(task[2].(string))
 		due_unix, _ := strconv.Atoi(task[3].(string))
-		fmt.Println(due_unix)
 		single_task.Due = time.Unix(int64(due_unix), 0)
 		task_list = append(task_list, single_task)
 	}
-	fmt.Println("Returning tasks ->", len(task_list))
 	return task_list
 }

@@ -3,22 +3,16 @@ package main
 import "fmt"
 
 func (taskTree *TaskTree) taskPlacement(task Task) {
-	fmt.Println("Checking if child of ->", taskTree.Task)
 	if task.ParentId == taskTree.Task.Id {
-		fmt.Println("Task Parent Found")
 		childrenTaskTree := TaskTree{}
 		childrenTaskTree.Task = task
 		taskTree.Children = append(taskTree.Children, childrenTaskTree)
-		fmt.Println("Task Tree ->", taskTree)
-		fmt.Println("Task Tree Child ->", taskTree.Children)
 		return
 	}
-	fmt.Println("Looping though taskTree.Children ->", taskTree.Children)
 	for i, children := range taskTree.Children {
 		children.taskPlacement(task)
 		taskTree.Children[i] = children
 	}
-	fmt.Println("Final Task Tree ->", taskTree)
 }
 
 func (taskTree *TaskTree) PrintTaskTree(depth int) {

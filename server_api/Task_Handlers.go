@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -43,8 +42,6 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	taskTree.getTaskWithIdFromDatabase()
-
-	fmt.Println(taskTree)
 
 	if err := json.NewEncoder(w).Encode(taskTree); err != nil {
 		log.WithFields(log.Fields{

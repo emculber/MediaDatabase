@@ -50,13 +50,11 @@ func DropTaskTables() {
 func (task *Task) RegisterNewTask() error {
 	if task.ParentId != 0 {
 		err := db.QueryRow(`insert into task_list (name, completed, due, parent) values($1, $2, $3, $4) returning id`, task.Name, task.Completed, task.Due, task.ParentId).Scan(&task.Id)
-		fmt.Println(err)
 		if err != nil {
 			return err
 		}
 	} else {
 		err := db.QueryRow(`insert into task_list (name, completed, due) values($1, $2, $3) returning id`, task.Name, task.Completed, task.Due).Scan(&task.Id)
-		fmt.Println(err)
 		if err != nil {
 			return err
 		}
@@ -93,8 +91,6 @@ func (taskTree *TaskTree) getTaskWithIdFromDatabase() error {
 																																 FROM parent_task`, taskTree.Task.Id)
 	data, _, err := postgresql_access.QueryDatabase(db, statement)
 
-	fmt.Println(data)
-
 	for _, task := range data {
 		single_task := Task{}
 		single_task.Id, _ = strconv.Atoi(task[0].(string))
@@ -103,16 +99,14 @@ func (taskTree *TaskTree) getTaskWithIdFromDatabase() error {
 		due, _ := strconv.Atoi(task[3].(string))
 		single_task.Due = time.Unix(int64(due), 0)
 		single_task.ParentId, _ = strconv.Atoi(task[4].(string))
-		fmt.Println("Finding place for task ->", single_task)
 		if single_task.Id == taskTree.Task.Id {
-			fmt.Println("Root Parent Task ->", single_task)
 			taskTree.Task = single_task
 			continue
 		}
 		taskTree.taskPlacement(single_task)
 	}
 
-	taskTree.PrintTaskTree(0)
+	//taskTree.PrintTaskTree(0)
 
 	//task.Due = time.Unix(due, 0) //TODO: DO I NEED THIS
 	if err != nil {
@@ -130,9 +124,7 @@ func (taskTree *TaskTree) getTasksFromDatabase() {
 	log.Info("Getting Tasks")
 	statement := fmt.Sprintf("SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER, parent FROM task_list")
 	//TODO: Error Checking
-	fmt.Println(statement)
 	tasks, _, err := postgresql_access.QueryDatabase(db, statement)
-	fmt.Println(err)
 
 	for _, task := range tasks {
 		single_task := Task{}
@@ -142,13 +134,11 @@ func (taskTree *TaskTree) getTasksFromDatabase() {
 		due_unix, _ := strconv.Atoi(task[3].(string))
 		single_task.Due = time.Unix(int64(due_unix), 0)
 		single_task.ParentId, _ = strconv.Atoi(task[4].(string))
-		fmt.Println("Finding place for task ->", single_task)
 		if single_task.Id == taskTree.Task.Id {
-			fmt.Println("Root Parent Task ->", single_task)
 			taskTree.Task = single_task
 			continue
 		}
 		taskTree.taskPlacement(single_task)
 	}
-	taskTree.PrintTaskTree(0)
+	//taskTree.PrintTaskTree(0)
 }

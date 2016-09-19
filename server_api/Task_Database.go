@@ -10,7 +10,7 @@ import (
 )
 
 var taskDatabaseSchema = []string{
-	"CREATE TABLE task_list(id SERIAL PRIMARY KEY, name VARCHAR(60), completed BOOLEAN, due TIMESTAMP)",
+	"CREATE TABLE task_list(id SERIAL PRIMARY KEY, name VARCHAR(60), completed BOOLEAN, due TIMESTAMP, parent INTEGER REFERENCES task_list(id))",
 }
 
 var taskDropDatabaseSchema = []string{
@@ -48,33 +48,86 @@ func DropTaskTables() {
 }
 
 func (task *Task) RegisterNewTask() error {
-	err := db.QueryRow(`insert into task_list (name, completed, due) values($1, $2, $3) returning id`, task.Name, task.Completed, task.Due).Scan(&task.Id)
-	if err != nil {
-		return err
+	if task.ParentId != 0 {
+		err := db.QueryRow(`insert into task_list (name, completed, due, parent) values($1, $2, $3, $4) returning id`, task.Name, task.Completed, task.Due, task.ParentId).Scan(&task.Id)
+		fmt.Println(err)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := db.QueryRow(`insert into task_list (name, completed, due) values($1, $2, $3) returning id`, task.Name, task.Completed, task.Due).Scan(&task.Id)
+		fmt.Println(err)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (task *Task) getTaskWithIdFromDatabase() error {
+func (taskTree *TaskTree) getTaskWithIdFromDatabase() error {
 	log.WithFields(log.Fields{
-		"ID": task.Id,
+		"ID": taskTree.Task.Id,
 	}).Info("Getting Task With Paramaters")
-	var due int64
-	err := db.QueryRow(`SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER FROM task_list WHERE id=$1`, task.Id).Scan(&task.Id, &task.Name, &task.Completed, &due)
-	task.Due = time.Unix(due, 0) //TODO: DO I NEED THIS
+	statement := fmt.Sprintf(`WITH RECURSIVE parent_task(id, name, completed, due, parent) AS (
+														  SELECT
+															  id,
+															  name,
+															  completed,
+															  EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER,
+															  parent
+														  FROM task_list
+															WHERE id = %d
+															UNION ALL SELECT
+																					ct.id,
+																					ct.name,
+																					ct.completed,
+																					EXTRACT(EPOCH FROM date_trunc('second', ct.due))::INTEGER,
+																					ct.parent
+																				FROM parent_task pt, task_list ct
+																				WHERE ct.parent = pt.id) SELECT
+																																	 id,
+																																	 name,
+																																	 completed,
+																																	 due,
+																																	 parent
+																																 FROM parent_task`, taskTree.Task.Id)
+	data, _, err := postgresql_access.QueryDatabase(db, statement)
+
+	fmt.Println(data)
+
+	for _, task := range data {
+		single_task := Task{}
+		single_task.Id, _ = strconv.Atoi(task[0].(string))
+		single_task.Name = task[1].(string)
+		single_task.Completed, _ = strconv.ParseBool(task[2].(string))
+		due, _ := strconv.Atoi(task[3].(string))
+		single_task.Due = time.Unix(int64(due), 0)
+		single_task.ParentId, _ = strconv.Atoi(task[4].(string))
+		fmt.Println("Finding place for task ->", single_task)
+		if single_task.Id == taskTree.Task.Id {
+			fmt.Println("Root Parent Task ->", single_task)
+			taskTree.Task = single_task
+			continue
+		}
+		taskTree.taskPlacement(single_task)
+	}
+
+	taskTree.PrintTaskTree(0)
+
+	//task.Due = time.Unix(due, 0) //TODO: DO I NEED THIS
 	if err != nil {
 		return err
 	}
 
 	log.WithFields(log.Fields{
-		"ID":   task.Id,
-		"Task": task,
+		"ID":        taskTree.Task.Id,
+		"Task Tree": taskTree,
 	}).Info("Task Found With Paramaters")
 	return nil
 }
 
 func getTasksFromDatabase() []Task {
-	task.Info("Getting Tasks")
+	log.Info("Getting Tasks")
 	statement := fmt.Sprintf("SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER FROM task_list")
 	//TODO: Error Checking
 	tasks, _, _ := postgresql_access.QueryDatabase(db, statement)

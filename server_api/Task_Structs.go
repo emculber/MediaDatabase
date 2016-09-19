@@ -10,6 +10,12 @@ type Task struct {
 	Name      string
 	Completed bool
 	Due       time.Time
+	ParentId  int
+}
+
+type TaskTree struct {
+	Task     Task
+	Children []TaskTree
 }
 
 func (task *Task) OK() error {

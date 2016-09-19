@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -31,8 +32,8 @@ func newTask(w http.ResponseWriter, r *http.Request) {
 
 func getTask(w http.ResponseWriter, r *http.Request) {
 	log.Info("Getting Task")
-	task := Task{}
-	err := json.NewDecoder(r.Body).Decode(&task)
+	taskTree := TaskTree{}
+	err := json.NewDecoder(r.Body).Decode(&taskTree.Task)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		log.WithFields(log.Fields{
@@ -41,9 +42,11 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task.getTaskWithIdFromDatabase()
+	taskTree.getTaskWithIdFromDatabase()
 
-	if err := json.NewEncoder(w).Encode(task); err != nil {
+	fmt.Println(taskTree)
+
+	if err := json.NewEncoder(w).Encode(taskTree); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Error Encoding Wallet")

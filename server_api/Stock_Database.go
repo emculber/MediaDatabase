@@ -126,10 +126,13 @@ func (tickers *Tickers) RegisterNewTicker() error {
 		if err, ok := err.(*pq.Error); ok {
 			fmt.Println(err)
 			if err.Code == "23505" {
+				err := tickers.getTickerBySymbolName()
 				fmt.Println("Updating Ticker ->", tickers)
-				//err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, updated_timestamp = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id).Scan(&tickers.Id)
+				if err != nil {
+					return err
+				}
+				err = tickers.updateTicker()
 				fmt.Println("Update err ->", err)
-				return nil
 				if err != nil {
 					return err
 				}
@@ -142,11 +145,38 @@ func (tickers *Tickers) RegisterNewTicker() error {
 	return nil
 }
 
-func (tickers *Tickers) updateTicker() error {
-	err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, archived = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id).Scan(&tickers.Id)
+func (ticker *Tickers) getTickerBySymbolName() error {
+	err := db.QueryRow(`SELECT id FROM tickers WHERE symbol=$1 and name=$2`).Scan(&ticker.Id)
+	fmt.Println("Error From getting ticker by symbol name ->", err)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (tickers *Tickers) updateTicker() error {
+	stmt, err := db.Prepare("UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, updated_timestamp = $4 WHERE id = $5")
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	res, err := stmt.Exec(tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	lastId, err := res.LastInsertId()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	rowCnt, err := res.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Printf("ID = %d, affected = %d\n", lastId, rowCnt)
+	//err := db.QueryRow(`UPDATE tickers SET symbol = $1, name=$2, exchange_id = $3, archived = $4 WHERE id = $5 returning id`, tickers.Symbol, tickers.Name, tickers.Exchange.Id, tickers.Timestamp, tickers.Id).Scan(&tickers.Id)
 	return nil
 }
 

@@ -55,7 +55,11 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTasks(w http.ResponseWriter, r *http.Request) {
-	if err := json.NewEncoder(w).Encode(getTasksFromDatabase()); err != nil {
+	taskTree := TaskTree{}
+	taskTree.Task.Id = 0
+	taskTree.Task.Name = "Root"
+	taskTree.getTasksFromDatabase()
+	if err := json.NewEncoder(w).Encode(taskTree); err != nil {
 		log.WithFields(log.Fields{
 			"Error": err,
 		}).Error("Error Encoding Wallet")

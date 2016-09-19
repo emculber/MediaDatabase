@@ -126,12 +126,13 @@ func (taskTree *TaskTree) getTaskWithIdFromDatabase() error {
 	return nil
 }
 
-func getTasksFromDatabase() []Task {
+func (taskTree *TaskTree) getTasksFromDatabase() {
 	log.Info("Getting Tasks")
-	statement := fmt.Sprintf("SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER FROM task_list")
+	statement := fmt.Sprintf("SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER, parent FROM task_list")
 	//TODO: Error Checking
-	tasks, _, _ := postgresql_access.QueryDatabase(db, statement)
-	task_list := []Task{}
+	fmt.Println(statement)
+	tasks, _, err := postgresql_access.QueryDatabase(db, statement)
+	fmt.Println(err)
 
 	for _, task := range tasks {
 		single_task := Task{}
@@ -140,7 +141,14 @@ func getTasksFromDatabase() []Task {
 		single_task.Completed, _ = strconv.ParseBool(task[2].(string))
 		due_unix, _ := strconv.Atoi(task[3].(string))
 		single_task.Due = time.Unix(int64(due_unix), 0)
-		task_list = append(task_list, single_task)
+		single_task.ParentId, _ = strconv.Atoi(task[4].(string))
+		fmt.Println("Finding place for task ->", single_task)
+		if single_task.Id == taskTree.Task.Id {
+			fmt.Println("Root Parent Task ->", single_task)
+			taskTree.Task = single_task
+			continue
+		}
+		taskTree.taskPlacement(single_task)
 	}
-	return task_list
+	taskTree.PrintTaskTree(0)
 }

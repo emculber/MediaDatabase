@@ -124,7 +124,7 @@ func (taskTree *TaskTree) getTasksFromDatabase() {
 	log.Info("Getting Tasks")
 	statement := fmt.Sprintf("SELECT id, name, completed, EXTRACT(EPOCH FROM date_trunc('second', due))::INTEGER, parent FROM task_list")
 	//TODO: Error Checking
-	tasks, _, err := postgresql_access.QueryDatabase(db, statement)
+	tasks, _, _ := postgresql_access.QueryDatabase(db, statement)
 
 	for _, task := range tasks {
 		single_task := Task{}

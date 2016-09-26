@@ -63,15 +63,80 @@ func (exchange *Exchange) RegisterNewExchange() error {
 	return nil
 }
 
-func (prices *Prices) RegisterNewPrice() error {
-	err := db.QueryRow(`insert into ticker_prices (ticker_id, stock_timestamp, close, high, low, open, volume) values($1, $2, $3, $4, $5, $6, $7) returning id`, prices.Ticker.Id, prices.Timestamp, prices.Close, prices.High, prices.Low, prices.Open, prices.Volume).Scan(&prices.Id)
-	if err, ok := err.(*pq.Error); ok {
-		if err.Code == "23505" {
-			return nil
-		} else {
-			return err
-		}
+func (prices *MultiplePrices) RegisterMultipleNewPrice() error {
+	fmt.Println("Setting up columns")
+	columns := []string{"ticker_id", "stock_timestamp", "close", "high", "low", "open", "volume"}
+
+	fmt.Println("Converting data to an interfaces")
+	var data [][]interface{}
+	for _, price := range prices.Prices {
+		inter := make([]interface{}, 7)
+		inter[0] = price.Ticker.Id
+		inter[1] = price.Timestamp
+		inter[2] = price.Close
+		inter[3] = price.High
+		inter[4] = price.Low
+		inter[5] = price.Open
+		inter[6] = price.Volume
+		data = append(data, inter)
 	}
+	fmt.Println("Converting prices ->", len(prices.Prices))
+	fmt.Println("price count ->", prices.count)
+
+	if len(prices.Prices) < 1 {
+		log.WithFields(log.Fields{
+			"Converted": len(data),
+			"Prices":    len(prices.Prices),
+			"Ticker":    prices.Prices[0].Ticker,
+		}).Info("Converted Prices")
+	}
+
+	if len(data) != len(prices.Prices) {
+		fmt.Println("Converted and Prices length does not match!!!")
+	}
+
+	fmt.Println("Trying to insert Multiple Data Values")
+
+	if err := postgresql_access.InsertMultiDataValues(db, "ticker_prices", columns, data); err != nil {
+		length := len(prices.Prices)
+		if length > 1 {
+			priceSplitFirst := MultiplePrices{}
+			priceSplitSecond := MultiplePrices{}
+			priceSplitFirst.Prices = prices.Prices[0 : length/2]
+			priceSplitFirst.count = prices.count
+			priceSplitSecond.Prices = prices.Prices[length/2 : length]
+			fmt.Println("FallBack Spliting Prices into two sections Length 1 ->", len(priceSplitFirst.Prices), "Length 2 ->", len(priceSplitSecond.Prices))
+			if len(priceSplitFirst.Prices)+len(priceSplitSecond.Prices) == length {
+				if len(priceSplitFirst.Prices) != 0 {
+					priceSplitFirst.RegisterMultipleNewPrice()
+				}
+				priceSplitSecond.count = priceSplitFirst.count
+				if len(priceSplitSecond.Prices) != 0 {
+					priceSplitSecond.RegisterMultipleNewPrice()
+				}
+				prices.count = priceSplitSecond.count
+			} else {
+				fmt.Println("ERROR:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NON MATCHING LENGHT")
+				panic("Error")
+			}
+		} else {
+			prices.count -= 1
+		}
+	} else {
+		prices.count -= len(prices.Prices)
+		fmt.Println("Insert everything")
+		fmt.Println("Count ->", prices.count)
+	}
+	/*
+		err := db.QueryRow(`insert into ticker_prices (ticker_id, stock_timestamp, close, high, low, open, volume) values($1, $2, $3, $4, $5, $6, $7) returning id`, prices.Ticker.Id, prices.Timestamp, prices.Close, prices.High, prices.Low, prices.Open, prices.Volume).Scan(&prices.Id)
+		if err, ok := err.(*pq.Error); ok {
+			if err.Code == "23505" {
+				return nil
+			} else {
+				return err
+			}
+		}
+	*/
 	return nil
 }
 

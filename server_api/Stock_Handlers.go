@@ -212,6 +212,16 @@ func createPrices(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
+
+	/*
+		multiplePrices := MultiplePrices{}
+
+		multiplePrices.Prices = prices
+		multiplePrices.count = len(prices)
+		multiplePrices.RegisterMultipleNewPrice()
+
+		return
+	*/
 	fmt.Println("Setting up columns")
 	columns := []string{"ticker_id", "stock_timestamp", "close", "high", "low", "open", "volume"}
 

@@ -27,6 +27,17 @@ type Prices struct {
 	Volume    int
 }
 
+type SimpleMovingAverage struct {
+	Period    int64
+	Timestamp int64
+	Prices    []Prices
+}
+
+type MultiplePrices struct {
+	Prices []Prices
+	count  int
+}
+
 func (exchange *Exchange) OK() error {
 	if len(exchange.Name) == 0 {
 		return errors.New("No Exchange")

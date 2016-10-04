@@ -48,20 +48,22 @@ func getMaximumSimpleMovingAverageTimestamp(w http.ResponseWriter, r *http.Reque
 }
 
 func getSimpleMovingAverageTimestamps(w http.ResponseWriter, r *http.Request) {
-	simpleMovingAverageOptions := SimpleMovingAverageOptions{}
-	err := json.NewDecoder(r.Body).Decode(&simpleMovingAverageOptions)
+	simpleMovingAverage := SimpleMovingAverage{}
+	err := json.NewDecoder(r.Body).Decode(&simpleMovingAverage)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		fmt.Println(err)
 		return
 	}
 	return
-	maximumTimestamp, _ := ticker.retriveSimpleMovingAverageMaxTimestamp()
+	/*
+		maximumTimestamp, _ := ticker.retriveSimpleMovingAverageMaxTimestamp()
 
-	if err := json.NewEncoder(w).Encode(maximumTimestamp); err != nil {
-		log.WithFields(log.Fields{
-			"Error": err,
-		}).Error("Error Encoding Wallet")
-		return
-	}
+		if err := json.NewEncoder(w).Encode(maximumTimestamp); err != nil {
+			log.WithFields(log.Fields{
+				"Error": err,
+			}).Error("Error Encoding Wallet")
+			return
+		}
+	*/
 }

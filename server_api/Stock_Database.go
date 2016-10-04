@@ -84,11 +84,14 @@ func (prices *MultiplePrices) RegisterMultipleNewPrice() error {
 	fmt.Println("price count ->", prices.count)
 
 	if len(prices.Prices) < 1 {
-		log.WithFields(log.Fields{
-			"Converted": len(data),
-			"Prices":    len(prices.Prices),
-			"Ticker":    prices.Prices[0].Ticker,
-		}).Info("Converted Prices")
+		fmt.Println(len(prices.Prices))
+		/*
+			log.WithFields(log.Fields{
+				"Converted": len(data),
+				"Prices":    len(prices.Prices),
+				"Ticker":    prices.Prices[0].Ticker,
+			}).Info("Converted Prices")
+		*/
 	}
 
 	if len(data) != len(prices.Prices) {
